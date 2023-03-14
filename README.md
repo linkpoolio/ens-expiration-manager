@@ -1,8 +1,8 @@
-# VRF Direct Funding COnsumer
+# ENS Expiration Manager
 
 ## I. About
 
-This is a consumer contract that allows users to pay for VRF calls in LINK. The purpose of this contract is to demonstrate how to use the Chainlink VRF Direct Funding method. This contract is not intended to be used in production. It is intended to be used as a reference for developers who want to implement the Chainlink VRF Direct Funding method in their own contracts.
+This contract automatically renews ENS names that are about to expire. It is designed to be used with the ENS Registrar and Chainlink Automation.
 
 ## II. Pre-requisites
 

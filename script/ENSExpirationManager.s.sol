@@ -3,26 +3,20 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
-import {VRFDirectFundingConsumer} from "@src/VRFDirectFundingConsumer.sol";
-import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
+import {ENSExpirationManager} from "@src/ENSExpirationManager.sol";
 
-contract VRFDirectFundingScript is Script {
+contract ENSExpirationManagerScript is Script {
     using stdJson for string;
 
-    VRFDirectFundingConsumer vrfDirectFundingConsumer;
+    ENSExpirationManager ensExpirationManager;
     uint256 deployerPrivateKey;
     Config config;
 
     struct Config {
-        uint32 automationCallbackGas;
-        uint32 callbackGasLimit;
-        address keepersRegistry;
-        address linkAddress;
-        string name;
-        address registrarAddress;
-        uint16 requestConfirmations;
-        address whaleAddress;
-        address wrapperAddress;
+        address keepersAddress;
+        address baseRegistrarAddress;
+        address registratControllerAddress;
+        uint256 protocolFee;
     }
 
     function configureNetwork(
@@ -51,11 +45,11 @@ contract VRFDirectFundingScript is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        vrfDirectFundingConsumer = new VRFDirectFundingConsumer(
-            config.callbackGasLimit,
-            config.linkAddress,
-            config.wrapperAddress,
-            config.requestConfirmations
+        ensExpirationManager = new ENSExpirationManager(
+            config.keepersAddress,
+            config.baseRegistrarAddress,
+            config.registratControllerAddress,
+            config.protocolFee
         );
 
         vm.stopBroadcast();

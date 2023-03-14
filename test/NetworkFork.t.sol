@@ -4,30 +4,24 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/StdJson.sol";
-import "@src/VRFDirectFundingConsumer.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ENSExpirationManager} from "@src/ENSExpirationManager.sol";
 
-contract VRFDirectFundingConsumerForkTest is Test {
+contract ENSExpirationManagerNetworkForkTest is Test {
     using stdJson for string;
 
-    VRFDirectFundingConsumer vrfDirectFundingConsumer;
-    LinkTokenInterface linkTokenContract;
-    uint256 network;
-    uint256 testNumber;
+    ENSExpirationManager ensExpirationManager;
     address admin;
-
+    address whale;
+    uint256 network;
     Config config;
 
     struct Config {
-        uint32 automationCallbackGas;
-        uint32 callbackGasLimit;
-        address keepersRegistry;
-        address linkAddress;
+        address baseRegistrarAddress;
+        address keeperAddress;
         string name;
-        address registrarAddress;
-        uint16 requestConfirmations;
-        address whaleAddress;
-        address wrapperAddress;
+        uint256 protocolFee;
+        address registrarControllerAddress;
+        address whale;
     }
 
     function configureNetwork(
@@ -43,34 +37,56 @@ contract VRFDirectFundingConsumerForkTest is Test {
             string.concat(inputDir, chainDir, file)
         );
         bytes memory rawConfig = data.parseRaw("");
+        console.logBytes(rawConfig);
         return abi.decode(rawConfig, (Config));
     }
 
     function setUp() public {
-        network = vm.createSelectFork(vm.rpcUrl("mumbai"));
+        network = vm.createSelectFork(vm.rpcUrl("mainnet"));
         config = configureNetwork("config");
         admin = makeAddr("admin");
-        testNumber = 42;
+        whale = address(config.whale);
+
         vm.startPrank(admin);
-        vrfDirectFundingConsumer = new VRFDirectFundingConsumer(
-            config.callbackGasLimit,
-            config.linkAddress,
-            config.wrapperAddress,
-            config.requestConfirmations
+        ensExpirationManager = new ENSExpirationManager(
+            config.keeperAddress,
+            config.baseRegistrarAddress,
+            config.registrarControllerAddress,
+            config.protocolFee
         );
-        linkTokenContract = LinkTokenInterface(config.linkAddress);
         vm.stopPrank();
     }
 
-    function testFork_requestRandomWords() public {
+    function forkSubscriptionFixture() public {
         vm.selectFork(network);
-        vm.prank(config.whaleAddress);
-        linkTokenContract.approve(
-            address(vrfDirectFundingConsumer),
-            1000000000000000000
-        );
+        vm.prank(whale);
+        uint256[] memory tokenIds = new uint256[](1);
+        uint256[] memory durations = new uint256[](1);
+        uint256[] memory gracePeriods = new uint256[](1);
+        tokenIds[
+            0
+        ] = 79233663829379634837589865448569342784712482819484549289560981379859480642508;
+        durations[0] = 4838400;
+        gracePeriods[0] = 241920;
 
-        vrfDirectFundingConsumer.requestRandomWords();
-        vm.stopPrank();
+        ensExpirationManager.addSubscriptions(
+            tokenIds,
+            durations,
+            gracePeriods
+        );
+    }
+
+    function testFork_AddSubscriptions() public {
+        forkSubscriptionFixture();
+    }
+
+    function testFork_RemoveSubscriptions() public {
+        forkSubscriptionFixture();
+        vm.prank(whale);
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[
+            0
+        ] = 79233663829379634837589865448569342784712482819484549289560981379859480642508;
+        ensExpirationManager.removeSubscriptions(tokenIds);
     }
 }

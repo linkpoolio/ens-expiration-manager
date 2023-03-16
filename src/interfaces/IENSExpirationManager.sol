@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 interface IENSExpirationManager {
     event DomainSubscriptionAdded(
         address owner,
-        uint256 tokenId,
+        string domainName,
         uint256 renewalDuration,
         uint256 gracePeriod
     );
@@ -44,7 +44,7 @@ interface IENSExpirationManager {
     function withdrawDeposit(uint256 _amount) external;
 
     function addSubscriptions(
-        uint256[] memory _tokenIds,
+        string[] memory _domainNames,
         uint256[] memory _renewalDurations,
         uint256[] memory _gracePeriods
     ) external;

@@ -60,17 +60,15 @@ contract ENSExpirationManagerNetworkForkTest is Test {
     function forkSubscriptionFixture() public {
         vm.selectFork(network);
         vm.prank(whale);
-        uint256[] memory tokenIds = new uint256[](1);
+        string[] memory domainNames = new string[](1);
         uint256[] memory durations = new uint256[](1);
         uint256[] memory gracePeriods = new uint256[](1);
-        tokenIds[
-            0
-        ] = 79233663829379634837589865448569342784712482819484549289560981379859480642508;
+        domainNames[0] = "vitalik";
         durations[0] = 4838400;
         gracePeriods[0] = 241920;
 
         ensExpirationManager.addSubscriptions(
-            tokenIds,
+            domainNames,
             durations,
             gracePeriods
         );
@@ -88,5 +86,9 @@ contract ENSExpirationManagerNetworkForkTest is Test {
             0
         ] = 79233663829379634837589865448569342784712482819484549289560981379859480642508;
         ensExpirationManager.removeSubscriptions(tokenIds);
+    }
+
+    function testFork_PerformUpkeep() public {
+        
     }
 }

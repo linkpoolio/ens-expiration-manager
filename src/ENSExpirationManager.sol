@@ -22,14 +22,14 @@ contract ENSExpirationManager is
     address public keeperRegistryAddress;
     uint256 public protocolFee;
     uint256[] private subscriptionIds;
-    /// @dev Mapping of tokenId to the subscription
+    /// @dev Mapping of tokenIds to the subscription
     mapping(uint256 => Subscription) public subscriptions;
     /// @dev Mapping of owner address to the amount of deposit
     mapping(address => uint256) public deposits;
 
     struct Subscription {
         address owner;
-        uint256 tokenId;
+        string domainName;
         uint256 renewalDuration;
         uint256 gracePeriod;
     }
@@ -85,6 +85,13 @@ contract ENSExpirationManager is
     /**
      * Admin ***************************************************
      */
+
+    /**
+     * @notice This method is called to top up the deposit
+     */
+    function transferOwnership(address _newOwner) public onlyOwner {
+        owner = _newOwner;
+    }
 
     /**
      * @notice This method is called to set the Keeper Registry Address
@@ -144,13 +151,24 @@ contract ENSExpirationManager is
      */
 
     /**
+     * @notice This method is called to get the owner of the ENS Domain
+     */
+    function stringToTokenId(
+        string memory _name
+    ) public pure returns (uint256) {
+        bytes32 labelHash = keccak256(bytes(_name));
+        return uint256(labelHash);
+    }
+
+    /**
      * @notice This method is called internally to add a domain subscription
      */
     function _addDomainSubscription(
-        uint256 _tokenId,
+        string memory _domainName,
         uint256 _renewalDuration,
         uint256 _gracePeriod
     ) internal {
+        uint256 _tokenId = stringToTokenId(_domainName);
         uint256 currentExpiration = baseRegistrar.nameExpires(_tokenId);
         if (_getTokenOwner(_tokenId) != msg.sender) {
             revert InvalidOwner();
@@ -169,7 +187,7 @@ contract ENSExpirationManager is
         }
         Subscription memory newSubscription = Subscription(
             msg.sender,
-            _tokenId,
+            _domainName,
             _renewalDuration,
             _gracePeriod
         );
@@ -177,7 +195,7 @@ contract ENSExpirationManager is
         subscriptionIds.push(_tokenId);
         emit DomainSubscriptionAdded(
             msg.sender,
-            _tokenId,
+            _domainName,
             _renewalDuration,
             _gracePeriod
         );
@@ -217,14 +235,19 @@ contract ENSExpirationManager is
     }
 
     /**
-     * @notice This method is called by the Keeper to renew the domain
+     * @notice This method is called by the Keeper to renew the domain. If the subscription owner does not have enough funds, the subscription is removed.
+     * @dev This method is called by the KeeperRegistry contract
+     * @param _tokenId The token ID of the ENS Domain
      */
     function _renewDomain(uint256 _tokenId) internal {
         address owner = subscriptions[_tokenId].owner;
-        if (deposits[owner] < protocolFee) {
-            revert InsufficientDeposit();
-        }
-        deposits[owner] -= protocolFee;
+        uint256 renewalPrice = registrarController
+            .rentPrice(
+                subscriptions[_tokenId].domainName,
+                subscriptions[_tokenId].renewalDuration
+            )
+            .base;
+        deposits[owner] -= (protocolFee + renewalPrice);
         baseRegistrar.renew(_tokenId, subscriptions[_tokenId].renewalDuration);
         emit DomainSubscriptionRenewed(_tokenId);
     }
@@ -260,19 +283,19 @@ contract ENSExpirationManager is
      * @notice This method is called to add subscriptions
      */
     function addSubscriptions(
-        uint256[] memory _tokenIds,
+        string[] memory _domainNames,
         uint256[] memory _renewalDurations,
         uint256[] memory _gracePeriods
     ) external {
         if (
             _renewalDurations.length != _gracePeriods.length ||
-            _gracePeriods.length != _tokenIds.length
+            _gracePeriods.length != _domainNames.length
         ) {
             revert InvalidSubscriptionsLength();
         }
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
+        for (uint256 i = 0; i < _domainNames.length; i++) {
             _addDomainSubscription(
-                _tokenIds[i],
+                _domainNames[i],
                 _renewalDurations[i],
                 _gracePeriods[i]
             );
@@ -325,14 +348,22 @@ contract ENSExpirationManager is
             uint256 tokenId = subscriptionIds[i];
             // If the owner of the subscription is not the owner of the ENS Domain, delete the subscription
             if (subscriptions[tokenId].owner != _getTokenOwner(tokenId)) {
-                // invalidSubscriptionsIds.push(tokenId);
                 invalidSubscriptionsIds[invalidSubscriptionsIdsCount] = tokenId;
                 invalidSubscriptionsIdsCount++;
                 emit DomainSubscriptionRemoved(tokenId);
                 continue;
             }
-            if (_isExpiring(tokenId)) {
-                // expiredDomainSubscriptionIds.push(tokenId);
+            if (
+                _isExpiring(tokenId) &&
+                deposits[subscriptions[tokenId].owner] <
+                protocolFee +
+                    registrarController
+                        .rentPrice(
+                            subscriptions[tokenId].domainName,
+                            subscriptions[tokenId].renewalDuration
+                        )
+                        .base
+            ) {
                 expiredDomainSubscriptionIds[
                     expiredDomainSubscriptionIdsCount
                 ] = tokenId;

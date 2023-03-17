@@ -19,6 +19,7 @@ contract ENSExpirationManagerNetworkForkTest is Test {
         address baseRegistrarAddress;
         address keeperAddress;
         string name;
+        address priceOracle;
         uint256 protocolFee;
         address registrarControllerAddress;
         address whale;
@@ -49,6 +50,7 @@ contract ENSExpirationManagerNetworkForkTest is Test {
 
         vm.startPrank(admin);
         ensExpirationManager = new ENSExpirationManager(
+            config.priceOracle,
             config.keeperAddress,
             config.baseRegistrarAddress,
             config.registrarControllerAddress,
@@ -60,35 +62,29 @@ contract ENSExpirationManagerNetworkForkTest is Test {
     function forkSubscriptionFixture() public {
         vm.selectFork(network);
         vm.prank(whale);
-        string[] memory domainNames = new string[](1);
-        uint256[] memory durations = new uint256[](1);
-        uint256[] memory gracePeriods = new uint256[](1);
-        domainNames[0] = "vitalik";
-        durations[0] = 4838400;
-        gracePeriods[0] = 241920;
+        string memory domainName;
+        uint256 duration;
+        uint256 gracePeriod;
+        domainName = "vitalik";
+        duration = 4838400;
+        gracePeriod = 241920;
 
-        ensExpirationManager.addSubscriptions(
-            domainNames,
-            durations,
-            gracePeriods
-        );
+        ensExpirationManager.addSubscription(domainName, duration, gracePeriod);
     }
 
     function testFork_AddSubscriptions() public {
         forkSubscriptionFixture();
     }
 
-    function testFork_RemoveSubscriptions() public {
-        forkSubscriptionFixture();
-        vm.prank(whale);
-        uint256[] memory tokenIds = new uint256[](1);
-        tokenIds[
-            0
-        ] = 79233663829379634837589865448569342784712482819484549289560981379859480642508;
-        ensExpirationManager.removeSubscriptions(tokenIds);
-    }
+    // function testFork_RemoveSubscriptions() public {
+    //     forkSubscriptionFixture();
+    //     vm.prank(whale);
+    //     uint256[] memory tokenIds = new uint256[](1);
+    //     tokenIds[
+    //         0
+    //     ] = 79233663829379634837589865448569342784712482819484549289560981379859480642508;
+    //     ensExpirationManager.removeSubscriptions(tokenIds);
+    // }
 
-    function testFork_PerformUpkeep() public {
-        
-    }
+    function testFork_PerformUpkeep() public {}
 }

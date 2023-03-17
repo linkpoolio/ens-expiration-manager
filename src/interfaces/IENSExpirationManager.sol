@@ -30,6 +30,7 @@ interface IENSExpirationManager {
     error InsufficientDeposit();
     error OnlyKeeperRegistry();
     error InvalidSubscriptionId();
+    error InsufficientFunds();
 
     function setKeeperRegistryAddress(address _keeperAddress) external;
 
@@ -43,11 +44,11 @@ interface IENSExpirationManager {
 
     function withdrawDeposit(uint256 _amount) external;
 
-    function addSubscriptions(
-        string[] memory _domainNames,
-        uint256[] memory _renewalDurations,
-        uint256[] memory _gracePeriods
-    ) external;
+    function addSubscription(
+        string memory _domainName,
+        uint256 _renewalDuration,
+        uint256 _gracePeriod
+    ) external payable;
 
     function removeSubscriptions(uint256[] calldata _subscriptionIds) external;
 }

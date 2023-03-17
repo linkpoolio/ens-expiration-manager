@@ -13,10 +13,13 @@ contract ENSExpirationManagerScript is Script {
     Config config;
 
     struct Config {
-        address keepersAddress;
         address baseRegistrarAddress;
-        address registratControllerAddress;
+        address keeperAddress;
+        string name;
+        address priceOracle;
         uint256 protocolFee;
+        address registrarControllerAddress;
+        address whale;
     }
 
     function configureNetwork(
@@ -46,9 +49,10 @@ contract ENSExpirationManagerScript is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         ensExpirationManager = new ENSExpirationManager(
-            config.keepersAddress,
+            config.priceOracle,
+            config.keeperAddress,
             config.baseRegistrarAddress,
-            config.registratControllerAddress,
+            config.registrarControllerAddress,
             config.protocolFee
         );
 

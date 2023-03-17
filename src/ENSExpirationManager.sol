@@ -5,22 +5,26 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IENSExpirationManager} from "./interfaces/IENSExpirationManager.sol";
-
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ETHRegistrarController} from "@ens-contracts/contracts/ethregistrar/ETHRegistrarController.sol";
+import {IPriceOracle} from "@ens-contracts/contracts/ethregistrar/IPriceOracle.sol";
 import {BaseRegistrarImplementation} from "@ens-contracts/contracts/ethregistrar/BaseRegistrarImplementation.sol";
 
 contract ENSExpirationManager is
     IENSExpirationManager,
     AutomationCompatibleInterface,
-    Pausable
+    Pausable,
+    ReentrancyGuard
 {
     /// @dev The BaseRegistrarImplementation contract
     BaseRegistrarImplementation baseRegistrar;
     /// @dev The ETHRegistrarController contract
     ETHRegistrarController registrarController;
+    IPriceOracle priceOracle;
     address public owner;
     address public keeperRegistryAddress;
     uint256 public protocolFee;
+    uint256 public protocolFeePool;
     uint256[] private subscriptionIds;
     /// @dev Mapping of tokenIds to the subscription
     mapping(uint256 => Subscription) public subscriptions;
@@ -38,11 +42,17 @@ contract ENSExpirationManager is
      * Modifiers ***********************************************
      */
 
+    /**
+     * @notice Modifier to check if the caller is the owner
+     */
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
+    /**
+     * @notice Modifier to check if the caller is the keeper registry
+     */
     modifier onlyKeeperRegistry() {
         if (msg.sender != keeperRegistryAddress) {
             revert OnlyKeeperRegistry();
@@ -51,13 +61,19 @@ contract ENSExpirationManager is
     }
 
     /**
+     * Constructor *********************************************
+     */
+
+    /**
      * @notice Initialize a ENSExpirationManager contract
+     * @param _priceOracle The address of the PriceOracle contract
      * @param _keeperAddress The address of the KeeperRegistry contract
      * @param _protocolFee The protocol fee
      * @param _registrarController The address of the ETHRegistrarController contract
      * @param _baseRegistrar The address of the BaseRegistrarImplementation contract
      */
     constructor(
+        address _priceOracle,
         address _keeperAddress,
         address _baseRegistrar,
         address _registrarController,
@@ -76,6 +92,7 @@ contract ENSExpirationManager is
             "Registrar Controller address cannot be 0x0"
         );
         owner = msg.sender;
+        setPriceOracle(_priceOracle);
         setKeeperRegistryAddress(_keeperAddress);
         setProtocolFee(_protocolFee);
         setRegistrarController(_registrarController);
@@ -87,10 +104,29 @@ contract ENSExpirationManager is
      */
 
     /**
+     * @notice This method is called to withdraw the protocol fees
+     */
+    function withdrawProtocolFees() external onlyOwner {
+        uint256 amount = protocolFeePool;
+        protocolFeePool = 0;
+        payable(msg.sender).transfer(amount);
+    }
+
+    /**
      * @notice This method is called to top up the deposit
      */
     function transferOwnership(address _newOwner) public onlyOwner {
         owner = _newOwner;
+    }
+
+    /**
+     * @notice This method is called to set the price oracle
+     */
+    function setPriceOracle(address _priceOracle) public onlyOwner {
+        if (_priceOracle == address(0)) {
+            revert ZeroAddress();
+        }
+        priceOracle = IPriceOracle(_priceOracle);
     }
 
     /**
@@ -153,52 +189,11 @@ contract ENSExpirationManager is
     /**
      * @notice This method is called to get the owner of the ENS Domain
      */
-    function stringToTokenId(
+    function _stringToTokenId(
         string memory _name
     ) public pure returns (uint256) {
         bytes32 labelHash = keccak256(bytes(_name));
         return uint256(labelHash);
-    }
-
-    /**
-     * @notice This method is called internally to add a domain subscription
-     */
-    function _addDomainSubscription(
-        string memory _domainName,
-        uint256 _renewalDuration,
-        uint256 _gracePeriod
-    ) internal {
-        uint256 _tokenId = stringToTokenId(_domainName);
-        uint256 currentExpiration = baseRegistrar.nameExpires(_tokenId);
-        if (_getTokenOwner(_tokenId) != msg.sender) {
-            revert InvalidOwner();
-        }
-        if (currentExpiration < block.timestamp) {
-            revert DomainAlreadyExpired();
-        }
-        if (
-            currentExpiration - _gracePeriod <= block.timestamp ||
-            _gracePeriod == 0
-        ) {
-            revert InvalidGracePeriod();
-        }
-        if (_renewalDuration < 28 * 24 * 60 * 60) {
-            revert InvalidRenewalDuration();
-        }
-        Subscription memory newSubscription = Subscription(
-            msg.sender,
-            _domainName,
-            _renewalDuration,
-            _gracePeriod
-        );
-        subscriptions[_tokenId] = newSubscription;
-        subscriptionIds.push(_tokenId);
-        emit DomainSubscriptionAdded(
-            msg.sender,
-            _domainName,
-            _renewalDuration,
-            _gracePeriod
-        );
     }
 
     /**
@@ -248,6 +243,7 @@ contract ENSExpirationManager is
             )
             .base;
         deposits[owner] -= (protocolFee + renewalPrice);
+        protocolFeePool += protocolFee;
         baseRegistrar.renew(_tokenId, subscriptions[_tokenId].renewalDuration);
         emit DomainSubscriptionRenewed(_tokenId);
     }
@@ -259,7 +255,7 @@ contract ENSExpirationManager is
     /**
      * @notice This method is called to top up the deposit amount
      */
-    function topUpDeposit() external payable {
+    function topUpDeposit() external payable nonReentrant {
         if (msg.value == 0) {
             revert InvalidTopUpAmount();
         }
@@ -270,7 +266,7 @@ contract ENSExpirationManager is
     /**
      * @notice This method is called to withdraw the deposited funds
      */
-    function withdrawDeposit(uint256 _amount) external {
+    function withdrawDeposit(uint256 _amount) external nonReentrant {
         if (_amount == 0 || _amount > deposits[msg.sender]) {
             revert InvalidWithdrawAmount();
         }
@@ -279,27 +275,56 @@ contract ENSExpirationManager is
         emit DepositWithdrawn(msg.sender, _amount);
     }
 
+    struct Price {
+        uint256 base;
+        uint256 premium;
+    }
+
     /**
      * @notice This method is called to add subscriptions
      */
-    function addSubscriptions(
-        string[] memory _domainNames,
-        uint256[] memory _renewalDurations,
-        uint256[] memory _gracePeriods
-    ) external {
+    function addSubscription(
+        string memory _domainName,
+        uint256 _renewalDuration,
+        uint256 _gracePeriod
+    ) external payable nonReentrant {
+        uint256 _tokenId = _stringToTokenId(_domainName);
+        uint256 _currentExpiration = baseRegistrar.nameExpires(_tokenId);
+        IPriceOracle.Price memory price = priceOracle.price(
+            _domainName,
+            _currentExpiration,
+            _renewalDuration
+        );
+        if (_getTokenOwner(_tokenId) != msg.sender) {
+            revert InvalidOwner();
+        }
         if (
-            _renewalDurations.length != _gracePeriods.length ||
-            _gracePeriods.length != _domainNames.length
+            _currentExpiration - _gracePeriod <= block.timestamp ||
+            _gracePeriod == 0
         ) {
-            revert InvalidSubscriptionsLength();
+            revert InvalidGracePeriod();
         }
-        for (uint256 i = 0; i < _domainNames.length; i++) {
-            _addDomainSubscription(
-                _domainNames[i],
-                _renewalDurations[i],
-                _gracePeriods[i]
-            );
+        if (_renewalDuration < 28 * 24 * 60 * 60) {
+            revert InvalidRenewalDuration();
         }
+        if (msg.value < protocolFee + price.base) {
+            revert InsufficientFunds();
+        }
+        Subscription memory newSubscription = Subscription(
+            msg.sender,
+            _domainName,
+            _renewalDuration,
+            _gracePeriod
+        );
+        subscriptions[_tokenId] = newSubscription;
+        subscriptionIds.push(_tokenId);
+        deposits[msg.sender] += msg.value;
+        emit DomainSubscriptionAdded(
+            msg.sender,
+            _domainName,
+            _renewalDuration,
+            _gracePeriod
+        );
     }
 
     /**

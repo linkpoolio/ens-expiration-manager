@@ -9,14 +9,15 @@ interface IENSExpirationManager {
         uint256 gracePeriod
     );
 
-    event DomainSubscriptionRenewed(uint256 tokenId);
+    event DomainSubscriptionRenewed(uint256 _tokenId);
 
-    event DomainSubscriptionRemoved(uint256 tokenId);
+    event DomainSubscriptionRemoved(uint256 _tokenId);
 
-    event DomainSubscriptionExpired(uint256 tokenId);
+    event DomainSubscriptionExpired(uint256 _tokenId);
 
-    event DepositToppedUp(address indexed owner, uint256 amount);
-    event DepositWithdrawn(address indexed owner, uint256 amount);
+    event DepositToppedUp(address indexed _owner, uint256 _amount);
+    event DepositWithdrawn(address indexed _owner, uint256 _amount);
+    event PendingWithdrawalsWithdrawn(address indexed _owner, uint256 _amount);
 
     error ZeroAddress();
     error InvalidWithdrawAmount();
@@ -50,5 +51,5 @@ interface IENSExpirationManager {
         uint256 _gracePeriod
     ) external payable;
 
-    function removeSubscriptions(uint256[] calldata _subscriptionIds) external;
+    function cancelSubscription(uint256 _tokenId) external;
 }

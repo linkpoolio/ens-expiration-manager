@@ -2,13 +2,27 @@
 pragma solidity ^0.8.17;
 
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
+import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IENSExpirationManager} from "./interfaces/IENSExpirationManager.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ETHRegistrarController} from "@ens-contracts/contracts/ethregistrar/ETHRegistrarController.sol";
-import {IPriceOracle} from "@ens-contracts/contracts/ethregistrar/IPriceOracle.sol";
 import {BaseRegistrarImplementation} from "@ens-contracts/contracts/ethregistrar/BaseRegistrarImplementation.sol";
+
+interface IPriceOracle {
+    /**
+     * @dev Returns the price to register or renew a name.
+     * @param name The name being registered or renewed.
+     * @param expires When the name presently expires (0 if this is a new registration).
+     * @param duration How long the name is being registered or extended for, in seconds.
+     * @return The price of this renewal or registration, in wei.
+     */
+    function price(
+        string calldata name,
+        uint expires,
+        uint duration
+    ) external view returns (uint);
+}
 
 contract ENSExpirationManager is
     IENSExpirationManager,
@@ -30,6 +44,7 @@ contract ENSExpirationManager is
     mapping(uint256 => Subscription) public subscriptions;
     /// @dev Mapping of owner address to the amount of deposit
     mapping(address => uint256) public deposits;
+    mapping(address => uint256) public pendingWithdrawals;
 
     struct Subscription {
         address owner;
@@ -253,6 +268,13 @@ contract ENSExpirationManager is
      */
 
     /**
+     * @notice This method is called to get the balance of the protocol fee pool
+     */
+    function getProtocolFeePoolBalance() external view returns (uint256) {
+        return protocolFeePool;
+    }
+
+    /**
      * @notice This method is called to top up the deposit amount
      */
     function topUpDeposit() external payable nonReentrant {
@@ -275,11 +297,6 @@ contract ENSExpirationManager is
         emit DepositWithdrawn(msg.sender, _amount);
     }
 
-    struct Price {
-        uint256 base;
-        uint256 premium;
-    }
-
     /**
      * @notice This method is called to add subscriptions
      */
@@ -290,7 +307,7 @@ contract ENSExpirationManager is
     ) external payable nonReentrant {
         uint256 _tokenId = _stringToTokenId(_domainName);
         uint256 _currentExpiration = baseRegistrar.nameExpires(_tokenId);
-        IPriceOracle.Price memory price = priceOracle.price(
+        uint256 _price = priceOracle.price(
             _domainName,
             _currentExpiration,
             _renewalDuration
@@ -307,7 +324,7 @@ contract ENSExpirationManager is
         if (_renewalDuration < 28 * 24 * 60 * 60) {
             revert InvalidRenewalDuration();
         }
-        if (msg.value < protocolFee + price.base) {
+        if (msg.value < protocolFee + _price) {
             revert InsufficientFunds();
         }
         Subscription memory newSubscription = Subscription(
@@ -319,6 +336,7 @@ contract ENSExpirationManager is
         subscriptions[_tokenId] = newSubscription;
         subscriptionIds.push(_tokenId);
         deposits[msg.sender] += msg.value;
+        protocolFeePool += protocolFee;
         emit DomainSubscriptionAdded(
             msg.sender,
             _domainName,
@@ -328,19 +346,36 @@ contract ENSExpirationManager is
     }
 
     /**
-     * @notice This method is called to remove subscriptions
+     * @notice This method is called to cancel and refund the subscription
      */
-    function removeSubscriptions(uint256[] memory _tokenIds) external {
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
-            if (
-                subscriptions[_tokenIds[i]].owner != msg.sender &&
-                _getTokenOwner(_tokenIds[i]) != msg.sender
-            ) {
-                revert NotOwnerOfSubscription();
-            }
-
-            _deleteSubscription(_tokenIds[i]);
+    function cancelSubscription(uint256 _tokenId) external nonReentrant {
+        if (subscriptions[_tokenId].owner != msg.sender) {
+            revert InvalidOwner();
         }
+        uint256 _price = priceOracle.price(
+            subscriptions[_tokenId].domainName,
+            baseRegistrar.nameExpires(_tokenId),
+            subscriptions[_tokenId].renewalDuration
+        );
+        uint256 refundAmount = protocolFee + _price;
+
+        require(deposits[msg.sender] >= refundAmount, "Insufficient deposit");
+
+        deposits[msg.sender] -= refundAmount;
+        protocolFeePool -= protocolFee;
+        pendingWithdrawals[msg.sender] += refundAmount;
+        _deleteSubscription(_tokenId);
+    }
+
+    /**
+     * @notice This method is called to withdraw the pending withdrawals
+     */
+    function withdrawPendingWithdrawals() external nonReentrant {
+        uint256 amount = pendingWithdrawals[msg.sender];
+        require(amount > 0, "No pending withdrawals");
+        pendingWithdrawals[msg.sender] = 0;
+        payable(msg.sender).transfer(amount);
+        emit PendingWithdrawalsWithdrawn(msg.sender, amount);
     }
 
     /**
@@ -421,7 +456,23 @@ contract ENSExpirationManager is
         );
         if (invalidSubscriptionsIds.length > 0) {
             for (uint256 i = 0; i < invalidSubscriptionsIds.length; i++) {
-                _deleteSubscription(invalidSubscriptionsIds[i]);
+                // Refund the deposit without the protocol fee as a penalty
+                uint256 _tokenId = invalidSubscriptionsIds[i];
+                uint256 _price = priceOracle.price(
+                    subscriptions[_tokenId].domainName,
+                    baseRegistrar.nameExpires(_tokenId),
+                    subscriptions[_tokenId].renewalDuration
+                );
+
+                require(
+                    deposits[subscriptions[_tokenId].owner] >= _price,
+                    "Insufficient deposit"
+                );
+
+                deposits[subscriptions[_tokenId].owner] -= _price;
+                pendingWithdrawals[subscriptions[_tokenId].owner] += _price;
+
+                _deleteSubscription(_tokenId);
             }
         }
         for (uint256 i = 0; i < expiredDomainSubscriptionIds.length; i++) {

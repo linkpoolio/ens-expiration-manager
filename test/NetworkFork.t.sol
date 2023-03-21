@@ -38,7 +38,6 @@ contract ENSExpirationManagerNetworkForkTest is Test {
             string.concat(inputDir, chainDir, file)
         );
         bytes memory rawConfig = data.parseRaw("");
-        console.logBytes(rawConfig);
         return abi.decode(rawConfig, (Config));
     }
 
@@ -69,22 +68,35 @@ contract ENSExpirationManagerNetworkForkTest is Test {
         duration = 4838400;
         gracePeriod = 241920;
 
-        ensExpirationManager.addSubscription(domainName, duration, gracePeriod);
+        ensExpirationManager.addSubscription{value: 1 ether}(
+            domainName,
+            duration,
+            gracePeriod
+        );
+        uint256 protocolFeePool = ensExpirationManager
+            .getProtocolFeePoolBalance();
+        assertEq(protocolFeePool, 100000000000000000);
     }
 
     function testFork_AddSubscriptions() public {
         forkSubscriptionFixture();
     }
 
-    // function testFork_RemoveSubscriptions() public {
-    //     forkSubscriptionFixture();
-    //     vm.prank(whale);
-    //     uint256[] memory tokenIds = new uint256[](1);
-    //     tokenIds[
-    //         0
-    //     ] = 79233663829379634837589865448569342784712482819484549289560981379859480642508;
-    //     ensExpirationManager.removeSubscriptions(tokenIds);
-    // }
+    function testFork_CancelSubscriptions() public {
+        forkSubscriptionFixture();
+        vm.prank(whale);
+        uint256 tokenId = 79233663829379634837589865448569342784712482819484549289560981379859480642508;
+        ensExpirationManager.cancelSubscription(tokenId);
+    }
 
-    function testFork_PerformUpkeep() public {}
+    function testFork_WithdrawProtocolFees() public {
+        forkSubscriptionFixture();
+        vm.prank(admin);
+        ensExpirationManager.withdrawProtocolFees();
+        uint256 protocolFeePool = ensExpirationManager
+            .getProtocolFeePoolBalance();
+        assertEq(protocolFeePool, 0);
+    }
+
+    // function testFork_PerformUpkeep() public {}
 }

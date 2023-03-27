@@ -41,10 +41,6 @@ interface IENSExpirationManager {
 
     function setProtocolFee(uint256 _protocolFee) external;
 
-    function topUpDeposit() external payable;
-
-    function withdrawDeposit(uint256 _amount) external;
-
     function addSubscription(
         string memory _domainName,
         uint256 _renewalDuration,

@@ -1,28 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IENSExpirationManager} from "./interfaces/IENSExpirationManager.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ETHRegistrarController} from "@ens-contracts/contracts/ethregistrar/ETHRegistrarController.sol";
 import {BaseRegistrarImplementation} from "@ens-contracts/contracts/ethregistrar/BaseRegistrarImplementation.sol";
-
-interface IPriceOracle {
-    /**
-     * @dev Returns the price to register or renew a name.
-     * @param name The name being registered or renewed.
-     * @param expires When the name presently expires (0 if this is a new registration).
-     * @param duration How long the name is being registered or extended for, in seconds.
-     * @return The price of this renewal or registration, in wei.
-     */
-    function price(
-        string calldata name,
-        uint expires,
-        uint duration
-    ) external view returns (uint);
-}
+import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
 
 contract ENSExpirationManager is
     IENSExpirationManager,
@@ -207,8 +192,7 @@ contract ENSExpirationManager is
     function _stringToTokenId(
         string memory _name
     ) public pure returns (uint256) {
-        bytes32 labelHash = keccak256(bytes(_name));
-        return uint256(labelHash);
+        return uint256(keccak256(bytes(_name)));
     }
 
     /**
@@ -245,27 +229,25 @@ contract ENSExpirationManager is
     }
 
     /**
-     * @notice This method is called by the Keeper to renew the domain. If the subscription owner does not have enough funds, the subscription is removed.
-     * @dev This method is called by the KeeperRegistry contract
-     * @param _tokenId The token ID of the ENS Domain
-     */
-    function _renewDomain(uint256 _tokenId) internal {
-        address owner = subscriptions[_tokenId].owner;
-        uint256 renewalPrice = registrarController
-            .rentPrice(
-                subscriptions[_tokenId].domainName,
-                subscriptions[_tokenId].renewalDuration
-            )
-            .base;
-        deposits[owner] -= (protocolFee + renewalPrice);
-        protocolFeePool += protocolFee;
-        baseRegistrar.renew(_tokenId, subscriptions[_tokenId].renewalDuration);
-        emit DomainSubscriptionRenewed(_tokenId);
-    }
-
-    /**
      * External ***********************************************
      */
+
+    /**
+     * @notice This method is called to return all the subscription instances
+     */
+    function getAllSubscriptions()
+        external
+        view
+        returns (Subscription[] memory)
+    {
+        Subscription[] memory _subscriptions = new Subscription[](
+            subscriptionIds.length
+        );
+        for (uint256 i = 0; i < subscriptionIds.length; i++) {
+            _subscriptions[i] = subscriptions[subscriptionIds[i]];
+        }
+        return _subscriptions;
+    }
 
     /**
      * @notice This method is called to get the balance of the protocol fee pool
@@ -275,26 +257,12 @@ contract ENSExpirationManager is
     }
 
     /**
-     * @notice This method is called to top up the deposit amount
+     * @notice This method is called to get the pending withdrawals amount
      */
-    function topUpDeposit() external payable nonReentrant {
-        if (msg.value == 0) {
-            revert InvalidTopUpAmount();
-        }
-        deposits[msg.sender] += msg.value;
-        emit DepositToppedUp(msg.sender, msg.value);
-    }
-
-    /**
-     * @notice This method is called to withdraw the deposited funds
-     */
-    function withdrawDeposit(uint256 _amount) external nonReentrant {
-        if (_amount == 0 || _amount > deposits[msg.sender]) {
-            revert InvalidWithdrawAmount();
-        }
-        payable(msg.sender).transfer(_amount);
-        deposits[msg.sender] -= _amount;
-        emit DepositWithdrawn(msg.sender, _amount);
+    function getPendingWithdrawals(
+        address _owner
+    ) external view returns (uint256) {
+        return pendingWithdrawals[_owner];
     }
 
     /**
@@ -476,7 +444,20 @@ contract ENSExpirationManager is
             }
         }
         for (uint256 i = 0; i < expiredDomainSubscriptionIds.length; i++) {
-            _renewDomain(expiredDomainSubscriptionIds[i]);
+            uint256 tokenId = expiredDomainSubscriptionIds[i];
+            address owner = subscriptions[tokenId].owner;
+            uint256 currentExpiration = baseRegistrar.nameExpires(tokenId);
+            uint256 renewalPrice = priceOracle.price(
+                subscriptions[tokenId].domainName,
+                currentExpiration,
+                subscriptions[tokenId].renewalDuration
+            );
+            registrarController.renew{value: renewalPrice}(
+                subscriptions[tokenId].domainName,
+                subscriptions[tokenId].renewalDuration
+            );
+            deposits[owner] -= renewalPrice;
+            emit DomainSubscriptionRenewed(tokenId);
         }
     }
 }

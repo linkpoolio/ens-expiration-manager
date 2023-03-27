@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/StdJson.sol";
 import {ENSExpirationManager} from "@src/ENSExpirationManager.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract ENSExpirationManagerNetworkForkTest is Test {
     using stdJson for string;
@@ -12,7 +13,12 @@ contract ENSExpirationManagerNetworkForkTest is Test {
     ENSExpirationManager ensExpirationManager;
     address admin;
     address whale;
+    address keeperAddress;
     uint256 network;
+    bytes performData;
+    string domainName1;
+    string domainName2;
+    string domainName3;
     Config config;
 
     struct Config {
@@ -61,15 +67,15 @@ contract ENSExpirationManagerNetworkForkTest is Test {
     function forkSubscriptionFixture() public {
         vm.selectFork(network);
         vm.prank(whale);
-        string memory domainName;
         uint256 duration;
         uint256 gracePeriod;
-        domainName = "vitalik";
+        domainName1 = "vitalik";
+        domainName2 = "lnbox";
         duration = 4838400;
         gracePeriod = 241920;
 
-        ensExpirationManager.addSubscription{value: 1 ether}(
-            domainName,
+        ensExpirationManager.addSubscription{value: 2 ether}(
+            domainName1,
             duration,
             gracePeriod
         );
@@ -78,15 +84,15 @@ contract ENSExpirationManagerNetworkForkTest is Test {
         assertEq(protocolFeePool, 100000000000000000);
     }
 
-    function testFork_AddSubscriptions() public {
+    function testFork_AddSubscription() public {
         forkSubscriptionFixture();
     }
 
     function testFork_CancelSubscriptions() public {
         forkSubscriptionFixture();
         vm.prank(whale);
-        uint256 tokenId = 79233663829379634837589865448569342784712482819484549289560981379859480642508;
-        ensExpirationManager.cancelSubscription(tokenId);
+        uint256 tokenId1 = uint256(keccak256(bytes(domainName1)));
+        ensExpirationManager.cancelSubscription(tokenId1);
     }
 
     function testFork_WithdrawProtocolFees() public {
@@ -98,5 +104,18 @@ contract ENSExpirationManagerNetworkForkTest is Test {
         assertEq(protocolFeePool, 0);
     }
 
-    // function testFork_PerformUpkeep() public {}
+    function testFork_PerformUpkeepRenewSingleDomain() public {
+        forkSubscriptionFixture();
+        keeperAddress = address(config.keeperAddress);
+        vm.prank(keeperAddress);
+        uint256 tokenId1 = uint256(keccak256(bytes(domainName1)));
+        uint256[] memory expiredToBeRenewedIds = new uint256[](1);
+        expiredToBeRenewedIds[0] = tokenId1;
+        uint256[] memory invalidSubscriptionsIds = new uint256[](0);
+        performData = abi.encode(
+            expiredToBeRenewedIds,
+            invalidSubscriptionsIds
+        );
+        ensExpirationManager.performUpkeep(performData);
+    }
 }

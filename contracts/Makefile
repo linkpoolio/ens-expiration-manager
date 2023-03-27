@@ -1,7 +1,7 @@
 -include .env
 
 install:
-	forge install Openzeppelin/openzeppelin-contracts smartcontractkit/chainlink ensdomains/ens-contracts
+	forge install --no-git Openzeppelin/openzeppelin-contracts smartcontractkit/chainlink ensdomains/ens-contracts
 
 deploy:
 	forge script script/ENSExpirationManager.s.sol:ENSExpirationManagerScript --rpc-url ${RPC_URL} --etherscan-api-key ${EXPLORER_KEY} --broadcast --verify -vvvv

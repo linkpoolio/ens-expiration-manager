@@ -1,7 +1,7 @@
 export const Routes = {
-  RaffleList: '/',
-  RaffleDetail: '/raffle/:id',
-  RaffleCreate: '/create'
+  SubscriptionList: '/',
+  SubscriptionDetail: '/raffle/:id',
+  SubscriptionCreate: '/create'
 }
 
 export const createRoute = ({ route, id }) => route.replace(':id', id)

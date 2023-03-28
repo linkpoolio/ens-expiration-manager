@@ -1,38 +1,40 @@
 import React from 'react'
-import { Switch, Route, Redirect } from 'react-router-dom'
+import { Switch, Redirect, Route } from 'react-router-dom'
 
 import { Routes } from '@ui/Routes'
-import { RaffleList } from '@ui/features/raffleList'
-import { RaffleDetail } from '@ui/features/raffleDetail'
-import { RaffleCreate } from '@ui/features/raffleCreate'
-import { AuthenticatedRoute, Hero } from '@ui/components'
+// import { RaffleList } from '@ui/features/raffleList'
+// import { RaffleDetail } from '@ui/features/raffleDetail'
+// import { RaffleCreate } from '@ui/features/raffleCreate'
+import { Hero } from '@ui/components'
+import { SubscriptionList } from './features/subscriptionList'
+import { SubscriptionDetail } from './features/subscriptionDetail/components'
 
 export const App = () => (
   <>
     <Switch>
       <Route
         exact
-        path={Routes.RaffleList}
+        path={Routes.SubscriptionList}
         render={(props) => (
           <>
             <Hero />
-            <RaffleList {...props} />
+            <SubscriptionList {...props} />
           </>
         )}
       />
 
       <Route
-        path={Routes.RaffleDetail}
-        render={({ match }) => <RaffleDetail id={match.params.id} />}
+        path={Routes.SubscriptionDetail}
+        render={({ match }) => <SubscriptionDetail id={match.params.id} />}
       />
 
-      <Route exact path={Routes.RaffleCreate}>
+      {/* <Route exact path={Routes.RaffleCreate}>
         <AuthenticatedRoute connected={true}>
           <RaffleCreate />
         </AuthenticatedRoute>
-      </Route>
+      </Route> */}
 
-      <Redirect to={Routes.RaffleList} />
+      <Redirect to={Routes.SubscriptionList} />
     </Switch>
   </>
 )

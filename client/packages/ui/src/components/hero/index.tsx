@@ -5,10 +5,10 @@ export const Hero = () => {
   return (
     <Container maxW="container.xl" mt="20">
       <Heading size="2xl" fontWeight="700" mb="6">
-        Chainlink Raffles
+        ENS Expiration Manager
       </Heading>
       <Text fontSize="lg" color="brand.gray_70" fontWeight="600">
-        Fun and Exciting Ways to Support Causes and Win Prizes
+        Manage your ENS domains and subdomains with ease.
       </Text>
       <Divider orientation="horizontal" mt="16" />
     </Container>

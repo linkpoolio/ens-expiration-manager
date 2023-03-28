@@ -252,25 +252,6 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "_name",
-        "type": "string"
-      }
-    ],
-    "name": "_stringToTokenId",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
         "name": "_domainName",
         "type": "string"
       },
@@ -402,6 +383,19 @@
   },
   {
     "inputs": [],
+    "name": "getProtocolFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getProtocolFeePoolBalance",
     "outputs": [
       {
@@ -449,6 +443,30 @@
         "internalType": "struct ENSExpirationManager.Subscription",
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_domainName",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_renewalDuration",
+        "type": "uint256"
+      }
+    ],
+    "name": "getTotalFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

@@ -16,7 +16,7 @@ export const NavigationBar = () => {
         <Flex as="nav" height={10} alignItems="center" gap="8">
           <Link
             as={RouterLink}
-            to={Routes.RaffleList}
+            to={Routes.SubscriptionList}
             _hover={{
               textTransform: 'none'
             }}
@@ -31,14 +31,14 @@ export const NavigationBar = () => {
               color="brand.primary"
               fontSize="lg"
               fontWeight="800">
-              Fair Chance
+              ENS Expiration Manager
             </Heading>
           </Link>
           <Flex alignItems="center" justifyContent="space-between" flex="1">
             <Flex gap="6">
               <Link
                 as={RouterLink}
-                to={Routes.RaffleList}
+                to={Routes.SubscriptionList}
                 fontSize="sm"
                 color="brand.gray_70"
                 fontWeight={600}
@@ -46,7 +46,7 @@ export const NavigationBar = () => {
                   textTransform: 'none',
                   color: 'brand.primary'
                 }}
-                href={Routes.RaffleList}>
+                href={Routes.SubscriptionList}>
                 Home
               </Link>
             </Flex>
@@ -54,10 +54,10 @@ export const NavigationBar = () => {
               {address && (
                 <Button
                   as={RouterLink}
-                  to={Routes.RaffleCreate}
-                  href={Routes.RaffleCreate}
+                  to={Routes.SubscriptionCreate}
+                  href={Routes.SubscriptionCreate}
                   variant="cta">
-                  Create Raffle
+                  Add Subscription
                 </Button>
               )}
               <Wallet />

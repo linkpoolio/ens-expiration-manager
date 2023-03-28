@@ -7347,9 +7347,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ens-expiration-manager-ui@workspace:packages/ens-expiration-manager":
+"ens-expiration-manager-ui@workspace:packages/ui":
   version: 0.0.0-use.local
-  resolution: "ens-expiration-manager-ui@workspace:packages/ens-expiration-manager"
+  resolution: "ens-expiration-manager-ui@workspace:packages/ui"
   dependencies:
     "@babel/core": ^7.15.0
     "@babel/plugin-transform-runtime": ^7.15.0
@@ -11526,61 +11526,6 @@ __metadata:
   checksum: 7bc32b99354a1aa46c089d2a82b63489961002bb1d654cee3e6d2d8778197b68c2d854fd23d8422436ee1fdfd0abaddc4d4da120afe700ade68bd357815b26fd
   languageName: node
   linkType: hard
-
-"raffle-chainlink-automation-ui@workspace:packages/ui":
-  version: 0.0.0-use.local
-  resolution: "raffle-chainlink-automation-ui@workspace:packages/ui"
-  dependencies:
-    "@babel/core": ^7.15.0
-    "@babel/plugin-transform-runtime": ^7.15.0
-    "@babel/preset-env": ^7.15.4
-    "@babel/preset-react": ^7.14.5
-    "@babel/preset-typescript": ^7.10.4
-    "@chakra-ui/icons": ^2.0.17
-    "@chakra-ui/react": ^2.5.1
-    "@emotion/react": ^11.10.6
-    "@emotion/styled": ^11.10.6
-    "@esbuild-plugins/node-globals-polyfill": ^0.1.1
-    "@fireworks-js/react": ^2.10.2
-    "@testing-library/react": ^14.0.0
-    "@testing-library/user-event": ^14.4.3
-    "@types/jest": ^29.1.2
-    "@types/node": ^18.13.0
-    "@types/react": ^18.0.21
-    "@types/react-dom": latest
-    "@typescript-eslint/eslint-plugin": ^5.51.0
-    "@typescript-eslint/parser": ^5.51.0
-    "@vitejs/plugin-react-refresh": ^1.3.1
-    babel-jest: ^29.1.2
-    babel-loader: ^8.2.2
-    babel-plugin-module-resolver: ^5.0.0
-    connectkit: ^1.1.3
-    eslint: ^7.32.0
-    eslint-config-prettier: ^8.3.0
-    eslint-plugin-prettier: ^3.4.0
-    eslint-plugin-react: ^7.24.0
-    eslint-plugin-testing-library: ^4.12.0
-    ethers: 5.5.4
-    framer-motion: ^9.0.4
-    jest: ^29.1.2
-    jest-environment-jsdom: ^29.1.2
-    keccak256: ^1.0.6
-    prettier: ^2.4.0
-    react: latest
-    react-dom: latest
-    react-helmet: ^6.1.0
-    react-papaparse: ^4.1.0
-    react-router: 5.3.1
-    react-router-dom: 5.3.1
-    react-test-renderer: ^18.2.0
-    string.prototype.replaceall: ^1.0.7
-    ts-jest: ^29.0.5
-    typescript: 4.9.5
-    vite: ^2.5.4
-    vite-plugin-react-md: ^1.0.1
-    wagmi: ^0.11.5
-  languageName: unknown
-  linkType: soft
 
 "raffle-chainlink-automation@workspace:.":
   version: 0.0.0-use.local

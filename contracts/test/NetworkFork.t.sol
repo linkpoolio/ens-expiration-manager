@@ -48,7 +48,7 @@ contract ENSExpirationManagerNetworkForkTest is Test {
     }
 
     function setUp() public {
-        network = vm.createSelectFork(vm.rpcUrl("mainnet"));
+        network = vm.createSelectFork(vm.rpcUrl("goerli"));
         config = configureNetwork("config");
         admin = makeAddr("admin");
         whale = address(config.whale);
@@ -69,7 +69,7 @@ contract ENSExpirationManagerNetworkForkTest is Test {
         vm.prank(whale);
         uint256 duration;
         uint256 gracePeriod;
-        domainName1 = "vitalik";
+        domainName1 = "ensexpirationmanager";
         domainName2 = "lnbox";
         duration = 4838400;
         gracePeriod = 241920;

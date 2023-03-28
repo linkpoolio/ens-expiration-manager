@@ -191,7 +191,7 @@ contract ENSExpirationManager is
      */
     function _stringToTokenId(
         string memory _name
-    ) public pure returns (uint256) {
+    ) private pure returns (uint256) {
         return uint256(keccak256(bytes(_name)));
     }
 
@@ -250,6 +250,13 @@ contract ENSExpirationManager is
     }
 
     /**
+     * @notice This method is called to get the protocol fee
+     */
+    function getProtocolFee() external view returns (uint256) {
+        return protocolFee;
+    }
+
+    /**
      * @notice This method is called to get the balance of the protocol fee pool
      */
     function getProtocolFeePoolBalance() external view returns (uint256) {
@@ -263,6 +270,23 @@ contract ENSExpirationManager is
         address _owner
     ) external view returns (uint256) {
         return pendingWithdrawals[_owner];
+    }
+
+    /**
+     * @notice This method is called to get the total fee for a domain
+     */
+    function getTotalFee(
+        string memory _domainName,
+        uint256 _renewalDuration
+    ) external view returns (uint256) {
+        uint256 _tokenId = _stringToTokenId(_domainName);
+        uint256 _currentExpiration = baseRegistrar.nameExpires(_tokenId);
+        uint256 _price = priceOracle.price(
+            _domainName,
+            _currentExpiration,
+            _renewalDuration
+        );
+        return _price + protocolFee;
     }
 
     /**

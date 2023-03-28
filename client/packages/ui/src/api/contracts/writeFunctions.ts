@@ -18,7 +18,7 @@ export const addSubscription = async (
         value: params.fee
       },
       functionName: 'addSubscription',
-      args: [params.domainName, params.renewalDuration, params.gracePeriod]
+      args: [params.domain, params.renewalDuration, params.gracePeriod]
     })
     const data = await writeContract(config)
     return data

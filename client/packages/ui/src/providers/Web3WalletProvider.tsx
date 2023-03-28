@@ -11,7 +11,7 @@ import {
   polygonMumbai
 } from 'wagmi/chains'
 
-const DEFAULT_CHAIN_ID = polygonMumbai.id
+const DEFAULT_CHAIN_ID = goerli.id
 
 export const CHAINS = [
   {
@@ -58,8 +58,18 @@ export const CHAINS = [
       }
     }
   },
-  hardhat,
-  goerli
+  {
+    ...goerli,
+    rpcUrls: {
+      public: {
+        http: ['https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161']
+      },
+      default: {
+        http: ['https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161']
+      }
+    }
+  },
+  hardhat
 ]
 
 const { chains, provider } = configureChains(

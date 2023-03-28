@@ -1,5 +1,4 @@
 import React from 'react'
-import { RaffleStatus } from '@ui/models'
 
 export const FairChance = ({ fill = '#375bd2', ...props }) => {
   return (
@@ -95,17 +94,4 @@ export const ArrowIcon = ({ fill = '#3F5ACB', ...props }) => {
       />
     </svg>
   )
-}
-
-export const StatusIcons = ({ status }: { status: RaffleStatus }) => {
-  switch (status) {
-    case RaffleStatus.RESOLVING:
-      return <CircleIcon fill="#FFB438" />
-    case RaffleStatus.FINISHED:
-      return <CircleIcon fill="#3F5ACB" />
-    case RaffleStatus.LIVE:
-      return <LiveIcon fill="#59C174" />
-    default:
-      return <CircleIcon fill="#CED0D5" />
-  }
 }

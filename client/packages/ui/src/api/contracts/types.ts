@@ -1,19 +1,19 @@
-import { BigNumber } from 'ethers'
-
 export interface AddSubscriptionParams {
-  domainName: string
+  domain: string
   renewalDuration: number
   gracePeriod: number
   fee: number
 }
 
 export interface CancelSubscriptionParams {
-  tokenId: number
+  tokenId: string
 }
 
-export interface SubscriptionInstance {
-  owner: string
-  domainName: string
-  renewalDuration: BigNumber
-  gracePeriod: BigNumber
+export interface GetRenewalPriceParams {
+  domain: string
+  renewalDuration: number
+}
+
+export interface GetSubscriptionParams {
+  tokenId: string
 }

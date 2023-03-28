@@ -4,7 +4,7 @@ import { useAccount } from 'wagmi'
 
 import { Routes } from '@ui/Routes'
 
-const Unauthenticated = <Redirect to={Routes.RaffleList} />
+const Unauthenticated = <Redirect to={Routes.SubscriptionList} />
 
 export const AuthenticatedRoute = ({ connected, children }) => {
   const { address } = useAccount()

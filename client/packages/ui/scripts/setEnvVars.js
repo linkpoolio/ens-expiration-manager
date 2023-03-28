@@ -10,17 +10,11 @@ async function readFile(filePath) {
   }
 }
 
-function strip(key) {
-  return key.replace('\n', '').trim()
-}
-
 async function setEnvVars() {
   const path = '/usr/share/nginx/html/index.html'
 
   const prefix = 'UI'
-  const envVarKeys = [
-    `${prefix}_ENS_EXPIRATION_MANAGER_CONTRACT_ADDRESS`
-  ]
+  const envVarKeys = [`${prefix}_ENS_EXPIRATION_MANAGER_CONTRACT_ADDRESS`]
 
   const envVars = envVarKeys
     .map((key) => `\t\tvar GLOBAL_${key}="${process.env[key]}";`)

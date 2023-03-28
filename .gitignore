@@ -1,5 +1,16 @@
-cache/
-out/
+node_modules
 .env
+coverage
+coverage.json
+typechain
+typechain-types
+.envrc
+package-lock.json
+pnpm-lock.yaml
+
+# Foundry
+out/
+cache/
+broadcast/
+contracts/docs/
 lib
-broadcast

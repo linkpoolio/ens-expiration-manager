@@ -48,7 +48,7 @@ contract ENSExpirationManagerNetworkForkTest is Test {
     }
 
     function setUp() public {
-        network = vm.createSelectFork(vm.rpcUrl("goerli"));
+        network = vm.createSelectFork(vm.rpcUrl("mainnet"));
         config = configureNetwork("config");
         admin = makeAddr("admin");
         whale = address(config.whale);
@@ -70,11 +70,11 @@ contract ENSExpirationManagerNetworkForkTest is Test {
         uint256 duration;
         uint256 gracePeriod;
         uint256 renewalCount;
-        domainName1 = "ensexpirationmanager";
+        domainName1 = "vitalik";
         domainName2 = "lnbox";
         duration = 4838400;
         gracePeriod = 241920;
-        renewalCount = 1;
+        renewalCount = 3;
 
         ensExpirationManager.addSubscription{value: 2 ether}(
             domainName1,
@@ -84,7 +84,7 @@ contract ENSExpirationManagerNetworkForkTest is Test {
         );
         uint256 protocolFeePool = ensExpirationManager
             .getProtocolFeePoolBalance();
-        assertEq(protocolFeePool, 100000000000000000);
+        assertEq(protocolFeePool, renewalCount * 100000000000000000);
     }
 
     function testFork_AddSubscription() public {
@@ -102,9 +102,9 @@ contract ENSExpirationManagerNetworkForkTest is Test {
         forkSubscriptionFixture();
         vm.prank(admin);
         ensExpirationManager.withdrawProtocolFees();
-        uint256 protocolFeePool = ensExpirationManager
-            .getProtocolFeePoolBalance();
-        assertEq(protocolFeePool, 0);
+        uint256 withdrawableProtocolFeePool = ensExpirationManager
+            .getWithdrawableProtocolFeePoolBalance();
+        assertEq(withdrawableProtocolFeePool, 0);
     }
 
     function testFork_PerformUpkeepRenewSingleDomain() public {

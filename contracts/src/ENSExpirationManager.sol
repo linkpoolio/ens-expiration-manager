@@ -24,6 +24,7 @@ contract ENSExpirationManager is
     address public keeperRegistryAddress;
     uint256 public protocolFee;
     uint256 public protocolFeePool;
+    uint256 public withdrawableProtocolFeePool;
     uint256[] private subscriptionIds;
     /// @dev Mapping of tokenIds to the subscription
     mapping(uint256 => Subscription) public subscriptions;
@@ -109,8 +110,8 @@ contract ENSExpirationManager is
      * @notice This method is called to withdraw the protocol fees
      */
     function withdrawProtocolFees() external onlyOwner {
-        uint256 amount = protocolFeePool;
-        protocolFeePool = 0;
+        uint256 amount = withdrawableProtocolFeePool;
+        withdrawableProtocolFeePool = 0;
         payable(msg.sender).transfer(amount);
     }
 
@@ -263,6 +264,17 @@ contract ENSExpirationManager is
      */
     function getProtocolFeePoolBalance() external view returns (uint256) {
         return protocolFeePool;
+    }
+
+    /**
+     * @notice This method is called to get the balance of the withdrawable protocol fee pool
+     */
+    function getWithdrawableProtocolFeePoolBalance()
+        external
+        view
+        returns (uint256)
+    {
+        return withdrawableProtocolFeePool;
     }
 
     /**
@@ -474,7 +486,8 @@ contract ENSExpirationManager is
 
                 deposits[subscriptions[_tokenId].owner] -= _price;
                 pendingWithdrawals[subscriptions[_tokenId].owner] += _price;
-
+                protocolFeePool -= protocolFee;
+                withdrawableProtocolFeePool += protocolFee;
                 _deleteSubscription(_tokenId);
             }
         }
@@ -492,6 +505,8 @@ contract ENSExpirationManager is
                 subscriptions[tokenId].renewalDuration
             );
             deposits[owner] -= renewalPrice;
+            protocolFeePool -= protocolFee;
+            withdrawableProtocolFeePool += protocolFee;
             subscriptions[tokenId].renewedCount++;
             emit DomainSubscriptionRenewed(tokenId);
             if (

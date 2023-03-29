@@ -10,7 +10,9 @@ export const transformSubscription = (subscription): SubscriptionInstance => {
         ethers.utils.keccak256(ethers.utils.toUtf8Bytes(subscription[1]))
       ).toString(),
       renewalDuration: subscription[2],
-      gracePeriod: subscription[3]
+      renewalCount: subscription[3],
+      renewedCount: subscription[4],
+      gracePeriod: subscription[5]
     }
   } catch (error: any) {
     throw new Error(`Error transforming subscription: ${error.message}`)

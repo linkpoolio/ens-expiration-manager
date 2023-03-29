@@ -35,6 +35,8 @@ contract ENSExpirationManager is
         address owner;
         string domainName;
         uint256 renewalDuration;
+        uint256 renewalCount;
+        uint256 renewedCount;
         uint256 gracePeriod;
     }
 
@@ -295,6 +297,7 @@ contract ENSExpirationManager is
     function addSubscription(
         string memory _domainName,
         uint256 _renewalDuration,
+        uint256 _renewalCount,
         uint256 _gracePeriod
     ) external payable nonReentrant {
         uint256 _tokenId = _stringToTokenId(_domainName);
@@ -316,23 +319,29 @@ contract ENSExpirationManager is
         if (_renewalDuration < 28 * 24 * 60 * 60) {
             revert InvalidRenewalDuration();
         }
-        if (msg.value < protocolFee + _price) {
+        if (_renewalCount < 1) {
+            revert InvalidRenewalCount();
+        }
+        if (msg.value < (protocolFee + _price) * _renewalCount) {
             revert InsufficientFunds();
         }
         Subscription memory newSubscription = Subscription(
             msg.sender,
             _domainName,
             _renewalDuration,
+            _renewalCount,
+            0, // default to 0 renewals
             _gracePeriod
         );
         subscriptions[_tokenId] = newSubscription;
         subscriptionIds.push(_tokenId);
-        deposits[msg.sender] += msg.value;
-        protocolFeePool += protocolFee;
+        deposits[msg.sender] += msg.value * _renewalCount;
+        protocolFeePool += protocolFee * _renewalCount;
         emit DomainSubscriptionAdded(
             msg.sender,
             _domainName,
             _renewalDuration,
+            _renewalCount,
             _gracePeriod
         );
     }
@@ -349,13 +358,15 @@ contract ENSExpirationManager is
             baseRegistrar.nameExpires(_tokenId),
             subscriptions[_tokenId].renewalDuration
         );
-        uint256 refundAmount = protocolFee + _price;
+        // calculate number of refundable renewals
+        uint256 refundableRenewals = subscriptions[_tokenId].renewalCount -
+            subscriptions[_tokenId].renewedCount;
 
-        require(deposits[msg.sender] >= refundAmount, "Insufficient deposit");
-
-        deposits[msg.sender] -= refundAmount;
-        protocolFeePool -= protocolFee;
-        pendingWithdrawals[msg.sender] += refundAmount;
+        deposits[msg.sender] -= _price * refundableRenewals;
+        protocolFeePool -= protocolFee * refundableRenewals;
+        pendingWithdrawals[msg.sender] +=
+            (_price + protocolFee) *
+            refundableRenewals;
         _deleteSubscription(_tokenId);
     }
 
@@ -481,7 +492,14 @@ contract ENSExpirationManager is
                 subscriptions[tokenId].renewalDuration
             );
             deposits[owner] -= renewalPrice;
+            subscriptions[tokenId].renewedCount++;
             emit DomainSubscriptionRenewed(tokenId);
+            if (
+                subscriptions[tokenId].renewedCount ==
+                subscriptions[tokenId].renewalCount
+            ) {
+                _deleteSubscription(tokenId);
+            }
         }
     }
 }

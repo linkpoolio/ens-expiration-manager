@@ -7,13 +7,19 @@ import {
   Text,
   Box,
   Flex,
-  useMediaQuery
+  useMediaQuery,
+  HStack
 } from '@chakra-ui/react'
 
 import { Loading, Pending, Error } from '@ui/components'
 import { useAsyncManager, useStore } from '@ui/hooks'
 import { shortenAddress } from '@ui/utils'
 import { getSubscription } from '@ui/features/subscriptionDetail'
+import { convertUnixTimeToDuration } from '@ui/utils'
+import {
+  StepManager,
+  CancelSubscriptionButton
+} from '@ui/features/subscriptionDetail'
 
 export const initialState = {
   subscription: null,
@@ -80,12 +86,18 @@ export const SubscriptionDetail = ({ id }) => {
         <Box>
           <Row name="Name" value={subscription.domain} />
           <Row
-            name="Renewal duration"
-            value={subscription.renewalDuration.toString()}
-          />
-          <Row
             name="Grace period"
             value={subscription.gracePeriod.toString()}
+          />
+          <Row
+            name="Available renewals"
+            value={subscription.renewalCount - subscription.renewedCount}
+          />
+          <Row
+            name="Renewal duration"
+            value={convertUnixTimeToDuration(
+              subscription.renewalDuration.toString()
+            )}
           />
           <Row
             name="Owner"
@@ -96,6 +108,17 @@ export const SubscriptionDetail = ({ id }) => {
             }
           />
           <Center h="60px"></Center>
+          <Center>
+            <HStack spacing="6">
+              <CancelSubscriptionButton update={store.update} />
+              <StepManager
+                id={id}
+                store={store}
+                address={address}
+                subscription={subscription}
+              />
+            </HStack>
+          </Center>
         </Box>
       </Container>
     )

@@ -6,6 +6,7 @@ interface IENSExpirationManager {
         address owner,
         string domainName,
         uint256 renewalDuration,
+        uint256 renewalCount,
         uint256 gracePeriod
     );
 
@@ -32,6 +33,7 @@ interface IENSExpirationManager {
     error OnlyKeeperRegistry();
     error InvalidSubscriptionId();
     error InsufficientFunds();
+    error InvalidRenewalCount();
 
     function setKeeperRegistryAddress(address _keeperAddress) external;
 
@@ -44,6 +46,7 @@ interface IENSExpirationManager {
     function addSubscription(
         string memory _domainName,
         uint256 _renewalDuration,
+        uint256 _renewalCount,
         uint256 _gracePeriod
     ) external payable;
 

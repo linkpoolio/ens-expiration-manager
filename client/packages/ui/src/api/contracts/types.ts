@@ -1,6 +1,7 @@
 export interface AddSubscriptionParams {
   domain: string
   renewalDuration: number
+  renewalCount: number
   gracePeriod: number
   fee: number
 }

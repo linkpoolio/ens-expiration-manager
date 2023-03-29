@@ -3,9 +3,11 @@ import { prepareWriteContract, writeContract } from '@wagmi/core'
 import { env } from '@ui/config'
 import { contracts } from '@ui/api'
 import abi from './abi/ENSExpirationManager.json'
+import { BigNumber } from 'ethers'
 
 const ensExpirationManagerContractAddress =
-  env.ensExpirationManagerContractAddress()
+  env.ensExpirationManagerContractAddress() ||
+  '0xd5Fbe74B04881eFD23aB2A281491CF3be4165a2E'
 
 export const addSubscription = async (
   params: contracts.AddSubscriptionParams
@@ -14,11 +16,16 @@ export const addSubscription = async (
     const config = await prepareWriteContract({
       address: ensExpirationManagerContractAddress,
       abi,
-      overrides: {
-        value: params.fee
-      },
       functionName: 'addSubscription',
-      args: [params.domain, params.renewalDuration, params.gracePeriod]
+      overrides: {
+        value: BigNumber.from(params.fee.toString())
+      },
+      args: [
+        params.domain,
+        params.renewalDuration,
+        params.renewalCount,
+        params.gracePeriod
+      ]
     })
     const data = await writeContract(config)
     return data

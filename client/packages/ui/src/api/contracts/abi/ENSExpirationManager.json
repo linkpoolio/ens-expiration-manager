@@ -57,6 +57,11 @@
   },
   {
     "inputs": [],
+    "name": "InvalidRenewalCount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "InvalidRenewalDuration",
     "type": "error"
   },
@@ -152,6 +157,12 @@
         "indexed": false,
         "internalType": "uint256",
         "name": "renewalDuration",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "renewalCount",
         "type": "uint256"
       },
       {
@@ -262,6 +273,11 @@
       },
       {
         "internalType": "uint256",
+        "name": "_renewalCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
         "name": "_gracePeriod",
         "type": "uint256"
       }
@@ -350,6 +366,16 @@
           },
           {
             "internalType": "uint256",
+            "name": "renewalCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "renewedCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
             "name": "gracePeriod",
             "type": "uint256"
           }
@@ -432,6 +458,16 @@
           {
             "internalType": "uint256",
             "name": "renewalDuration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "renewalCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "renewedCount",
             "type": "uint256"
           },
           {
@@ -664,6 +700,16 @@
       {
         "internalType": "uint256",
         "name": "renewalDuration",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "renewalCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "renewedCount",
         "type": "uint256"
       },
       {

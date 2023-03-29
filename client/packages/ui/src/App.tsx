@@ -5,7 +5,8 @@ import { Routes } from '@ui/Routes'
 // import { RaffleList } from '@ui/features/raffleList'
 // import { RaffleDetail } from '@ui/features/raffleDetail'
 // import { RaffleCreate } from '@ui/features/raffleCreate'
-import { Hero } from '@ui/components'
+import { Hero, AuthenticatedRoute } from '@ui/components'
+import { SubscriptionCreate } from './features/subscriptionCreate/components'
 import { SubscriptionList } from './features/subscriptionList'
 import { SubscriptionDetail } from './features/subscriptionDetail/components'
 
@@ -28,11 +29,11 @@ export const App = () => (
         render={({ match }) => <SubscriptionDetail id={match.params.id} />}
       />
 
-      {/* <Route exact path={Routes.RaffleCreate}>
+      <Route exact path={Routes.SubscriptionCreate}>
         <AuthenticatedRoute connected={true}>
-          <RaffleCreate />
+          <SubscriptionCreate />
         </AuthenticatedRoute>
-      </Route> */}
+      </Route>
 
       <Redirect to={Routes.SubscriptionList} />
     </Switch>

@@ -11,7 +11,7 @@ import { BigNumber } from 'ethers'
 
 const ensExpirationManagerContractAddress =
   env.ensExpirationManagerContractAddress() ||
-  '0x6EcA5fe3e7301c094C875776aB1A3B7092CDA41d'
+  '0xd5Fbe74B04881eFD23aB2A281491CF3be4165a2E'
 
 export const getAllSubscriptions = async (): Promise<
   SubscriptionInstance[]

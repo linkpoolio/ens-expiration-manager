@@ -5,7 +5,6 @@ export const getSubscriptionList = async ({ asyncManager, update }) => {
     asyncManager.start()
 
     const list = await contracts.getAllSubscriptions()
-    console.log({ list })
     asyncManager.success()
     update({ list })
   } catch (error) {

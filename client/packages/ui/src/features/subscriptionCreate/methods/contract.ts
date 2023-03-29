@@ -1,19 +1,17 @@
 import { contracts } from '@ui/api'
+import { Routes } from '@ui/Routes'
 
-export const addSubscription = async ({
-  domain,
-  renewalDuration,
-  gracePeriod,
-  asyncManager
-}) => {
+export const addSubscription = async ({ state, asyncManager, history }) => {
   try {
     asyncManager.start()
-    const fee = await contracts.getTotalFee({ domain, renewalDuration })
+    // const totalbaseFee = await contracts.getTotalFee({
+    //   domain: state.domain,
+    //   renewalDuration: state.renewalDuration
+    // })
+    // console.log({ totalbaseFee })
     const { wait } = await contracts.addSubscription({
-      domain,
-      renewalDuration,
-      gracePeriod,
-      fee
+      ...state,
+      fee: 100767123285644800 * state.renewalCount
     })
     asyncManager.waiting()
 
@@ -23,6 +21,11 @@ export const addSubscription = async ({
       throw new Error('Request to add subscription was not successful')
 
     asyncManager.success()
+
+    history.push({
+      pathname: Routes.SubscriptionList,
+      search: '?create-success'
+    })
   } catch (error) {
     asyncManager.fail(`Could not add subscription.`)
   }

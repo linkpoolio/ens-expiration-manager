@@ -1,5 +1,4 @@
 import { contracts } from '@ui/api'
-import { ethers, BigNumber } from 'ethers'
 
 export const getSubscription = async ({ tokenId, asyncManager, update }) => {
   try {
@@ -14,18 +13,28 @@ export const getSubscription = async ({ tokenId, asyncManager, update }) => {
   }
 }
 
-export const cancelSubscription = async ({ domain, asyncManager }) => {
+export const cancelSubscription = async ({ domain, asyncManager, success }) => {
   try {
     asyncManager.start()
-    const tokenId = BigNumber.from(
-      ethers.utils.keccak256(ethers.utils.toUtf8Bytes(domain))
-    ).toString()
-    const { wait } = await contracts.cancelSubscription({ tokenId })
+    const { wait: cancelWait } = await contracts.cancelSubscription({
+      tokenId: domain
+    })
     asyncManager.waiting()
-    const isSuccess = await wait().then((receipt) => receipt.status === 1)
-    if (!isSuccess)
-      throw new Error('Request to cancel the subscription was not successful')
-    asyncManager.success()
+    const cancelIsSuccess = await cancelWait().then(
+      (receipt) => receipt.status === 1
+    )
+    if (cancelIsSuccess) {
+      const { wait: withdrawWait } =
+        await contracts.withdrawPendingWithdrawals()
+      asyncManager.waiting()
+      const withdrawIsSuccess = await withdrawWait().then(
+        (receipt) => receipt.status === 1
+      )
+      if (!withdrawIsSuccess)
+        throw new Error('Request to cancel the subscription was not successful')
+      asyncManager.success()
+      success(true)
+    }
   } catch (error) {
     asyncManager.fail(`Could not cancel subscription.`)
   }

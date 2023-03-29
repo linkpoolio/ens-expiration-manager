@@ -69,14 +69,17 @@ contract ENSExpirationManagerNetworkForkTest is Test {
         vm.prank(whale);
         uint256 duration;
         uint256 gracePeriod;
+        uint256 renewalCount;
         domainName1 = "ensexpirationmanager";
         domainName2 = "lnbox";
         duration = 4838400;
         gracePeriod = 241920;
+        renewalCount = 1;
 
         ensExpirationManager.addSubscription{value: 2 ether}(
             domainName1,
             duration,
+            renewalCount,
             gracePeriod
         );
         uint256 protocolFeePool = ensExpirationManager

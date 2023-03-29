@@ -36,6 +36,7 @@ export ANVIL_PRIVATE_KEY="" # Get from anvil after running for the first time, s
 
 # UI
 export UI_ENS_EXPIRATION_MANAGER_CONTRACT_ADDRESS=
+export UI_ENS_BASE_REGISTRAR_CONTRACT_ADDRESS=
 ```
 
 ### 4. Setup Wallet

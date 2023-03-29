@@ -15,7 +15,7 @@ import { Loading, Pending, Error } from '@ui/components'
 import { useAsyncManager, useStore } from '@ui/hooks'
 import { shortenAddress } from '@ui/utils'
 import { getSubscription } from '@ui/features/subscriptionDetail'
-import { convertUnixTimeToDuration } from '@ui/utils'
+import { convertUnixTimeToDuration, formatUnixTs } from '@ui/utils'
 import {
   StepManager,
   CancelSubscriptionButton
@@ -28,7 +28,8 @@ export const initialState = {
   participantStatus: null,
   isParticipant: null,
   claimableLink: null,
-  participants: []
+  participants: [],
+  expirationDate: null
 }
 
 const Row = ({ name, value }) => {
@@ -86,8 +87,10 @@ export const SubscriptionDetail = ({ id }) => {
         <Box>
           <Row name="Name" value={subscription.domain} />
           <Row
-            name="Grace period"
-            value={subscription.gracePeriod.toString()}
+            name="Renewal Date"
+            value={formatUnixTs(
+              subscription.expirationDate - subscription.gracePeriod
+            )}
           />
           <Row
             name="Available renewals"

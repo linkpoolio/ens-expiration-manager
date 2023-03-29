@@ -7,12 +7,17 @@ import {
 } from '@ui/models'
 import { contracts } from '@ui/api'
 import ensExpirationManagerABI from './abi/ENSExpirationManager.json'
+import ensBaseRegistrarABI from './abi/ENSBaseRegistrar.json'
 import { BigNumber } from 'ethers'
 
 // TODO: REMOVE THIS
 const ensExpirationManagerContractAddress =
   env.ensExpirationManagerContractAddress() ||
   '0xd5Fbe74B04881eFD23aB2A281491CF3be4165a2E'
+
+const ensENSBaseRegistrarContractAddress =
+  env.ensENSBaseRegistrarContractAddress() ||
+  '0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85'
 
 export const getAllSubscriptions = async (): Promise<
   SubscriptionInstance[]
@@ -58,6 +63,24 @@ export const getTotalFee = async (
       address: ensExpirationManagerContractAddress,
       functionName: 'getTotalFee',
       args: [params.domain, params.renewalDuration]
+    })
+    return Number(data)
+  } catch (error: any) {
+    throw new Error(
+      `Error fetching raffles list from contract: ${error.message}`
+    )
+  }
+}
+
+export const getExpirationDate = async (
+  params: contracts.GetExpirationDateParams
+): Promise<number> => {
+  try {
+    const data = await readContract({
+      abi: ensBaseRegistrarABI,
+      address: ensENSBaseRegistrarContractAddress,
+      functionName: 'nameExpires',
+      args: [params.tokenId]
     })
     return Number(data)
   } catch (error: any) {

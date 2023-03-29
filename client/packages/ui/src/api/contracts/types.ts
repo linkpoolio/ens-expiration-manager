@@ -18,3 +18,7 @@ export interface GetRenewalPriceParams {
 export interface GetSubscriptionParams {
   tokenId: string
 }
+
+export interface GetExpirationDateParams {
+  tokenId: string
+}

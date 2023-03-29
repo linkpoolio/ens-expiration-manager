@@ -7,6 +7,7 @@ import { Routes, createRoute } from '@ui/Routes'
 // import { formatUnixTs, formatFinishDate } from '@ui/utils'
 import { SubscriptionInstance } from '@ui/models'
 import { BigNumber } from 'ethers'
+import { convertUnixTimeToDuration } from '@ui/utils'
 
 export const Card = (subscription: SubscriptionInstance) => {
   return (
@@ -66,14 +67,14 @@ export const Card = (subscription: SubscriptionInstance) => {
         <Flex justify="space-between" w="100%">
           <Text fontSize={'sm'}>Renewal duration:</Text>
           <Text fontSize={'sm'}>
-            {BigNumber.from(subscription.renewalDuration).toString()}
+            {convertUnixTimeToDuration(subscription.renewalDuration.toString())}
           </Text>
         </Flex>
 
         <Flex justify="space-between" w="100%">
-          <Text fontSize={'sm'}>Start Date:</Text>
+          <Text fontSize={'sm'}>Available renewals:</Text>
           <Text fontSize={'sm'}>
-            {BigNumber.from(subscription.gracePeriod).toString()}
+            {subscription.renewalCount - subscription.renewedCount}
           </Text>
         </Flex>
       </VStack>

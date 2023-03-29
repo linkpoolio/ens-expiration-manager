@@ -12,5 +12,14 @@ export const env = {
         ? // @ts-ignore:next-line
           envEnsExpirationManagerContractAddress
         : undefined // eslint-disable-line no-undef
+    ),
+  ensENSBaseRegistrarContractAddress: () =>
+    getEnv(
+      `UI_ENS_BASE_REGISTRAR_CONTRACT_ADDRESS`,
+      // @ts-ignore:next-line
+      typeof envEnsENSBaseRegistrarContractAddress == 'string'
+        ? // @ts-ignore:next-line
+          envEnsENSBaseRegistrarContractAddress
+        : undefined // eslint-disable-line no-undef
     )
 }

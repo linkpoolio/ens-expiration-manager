@@ -25,7 +25,10 @@ export const formatFinishDate = (
   options?: Intl.DateTimeFormatOptions
 ) => formatUnixTs(Number(unixTsStartDate) + hours * 3600, options)
 
-export const convertUnixTimeToDuration = (durationInSeconds: number) => {
+export const convertUnixTimeToDuration = (
+  durationInSeconds: number | string
+) => {
+  durationInSeconds = Number(durationInSeconds)
   const days = Math.floor(durationInSeconds / 86400)
   durationInSeconds %= 86400
   const hours = Math.floor(durationInSeconds / 3600)

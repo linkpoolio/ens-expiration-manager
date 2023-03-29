@@ -3,9 +3,10 @@ import { contracts } from '@ui/api'
 export const getSubscription = async ({ tokenId, asyncManager, update }) => {
   try {
     asyncManager.start()
+    const expirationDate = await contracts.getExpirationDate({ tokenId })
     const subscription = await contracts.getSubscription({ tokenId })
     asyncManager.success()
-    update({ subscription })
+    update({ subscription: { ...subscription, expirationDate } })
   } catch (error) {
     asyncManager.fail(
       `Could not get the subscription, please check your're connected to the correct network.`

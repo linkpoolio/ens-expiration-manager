@@ -4,14 +4,13 @@ import { Routes } from '@ui/Routes'
 export const addSubscription = async ({ state, asyncManager, history }) => {
   try {
     asyncManager.start()
-    // const totalbaseFee = await contracts.getTotalFee({
-    //   domain: state.domain,
-    //   renewalDuration: state.renewalDuration
-    // })
-    // console.log({ totalbaseFee })
+    const totalbaseFee = await contracts.getTotalFee({
+      domain: state.domain,
+      renewalDuration: state.renewalDuration
+    })
     const { wait } = await contracts.addSubscription({
       ...state,
-      fee: 100767123285644800 * state.renewalCount
+      fee: totalbaseFee * state.renewalCount
     })
     asyncManager.waiting()
 

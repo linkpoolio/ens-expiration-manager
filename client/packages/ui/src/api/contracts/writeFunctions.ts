@@ -5,6 +5,7 @@ import { contracts } from '@ui/api'
 import abi from './abi/ENSExpirationManager.json'
 import { BigNumber } from 'ethers'
 
+// TODO: REMOVE THIS
 const ensExpirationManagerContractAddress =
   env.ensExpirationManagerContractAddress() ||
   '0xd5Fbe74B04881eFD23aB2A281491CF3be4165a2E'

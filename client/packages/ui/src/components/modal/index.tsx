@@ -10,7 +10,7 @@ import {
 
 export const Modal = ({ children, onClose, isOpen }) => {
   return (
-    <ChakraModal isOpen={isOpen} onClose={onClose}>
+    <ChakraModal isOpen={isOpen} onClose={onClose} closeOnOverlayClick={false}>
       <ModalOverlay />
       <ModalContent>
         <ModalCloseButton />

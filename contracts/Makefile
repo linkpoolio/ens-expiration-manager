@@ -6,9 +6,9 @@ install:
 deploy:
 	forge script script/ENSExpirationManager.s.sol:ENSExpirationManagerScript --rpc-url ${RPC_URL} --etherscan-api-key ${EXPLORER_KEY} --broadcast --verify -vvvv
 
-# test
-test:
-	forge test -vvvvvvv
+# tests
+test-contracts-all:
+	forge test -vvvvv
 # docs
 gen-docs:
 	forge doc

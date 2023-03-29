@@ -110,7 +110,9 @@ export const SubscriptionDetail = ({ id }) => {
           <Center h="60px"></Center>
           <Center>
             <HStack spacing="6">
-              <CancelSubscriptionButton update={store.update} />
+              {address && address === subscription.owner && (
+                <CancelSubscriptionButton update={store.update} />
+              )}
               <StepManager
                 id={id}
                 store={store}

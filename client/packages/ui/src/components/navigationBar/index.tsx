@@ -3,7 +3,6 @@ import { Link as RouterLink } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import { Heading, Box, Container, Flex, Link, Button } from '@chakra-ui/react'
 
-import { FairChance } from '@ui/components'
 import { Routes } from '@ui/Routes'
 import { Wallet } from '@ui/features/wallet'
 
@@ -23,7 +22,6 @@ export const NavigationBar = () => {
             display="flex"
             alignItems="center"
             gap="3">
-            <FairChance width="32px" height="32px" />
             <Heading
               display={{ base: 'none', md: 'inline' }}
               as="h1"

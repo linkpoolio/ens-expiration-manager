@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+      script-src 'self' 'unsafe-inline';
+      style-src 'self' 'unsafe-inline';
+      object-src 'none'" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ENS Expiration Manager</title>
+    <meta
+      name="description"
+      content="Manage your ENS domains and subdomains with ease." />
+    <meta name="author" content="ENS Expiration Manager" />
+    <meta name="keywords" content="ENS, Chainlink, Automation" />
+
+    <meta property="og:title" content="ENS Expiration Manager" />
+    <meta
+      property="og:description"
+      content="Manage your ENS domains and subdomains with ease." />
+    <meta property="og:image" content="TODO" />
+    <meta property="og:image:secure_url" content="TODO" />
+    <meta property="og:image:width" content="1920" />
+    <meta property="og:image:height" content="1080" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="Fair Chance Raffle" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="TODO" />
+    <meta name="twitter:creator" content="TODO" />
+    <meta name="twitter:title" content="TODO" />
+    <meta
+      name="twitter:description"
+      content="Manage your ENS domains and subdomains with ease." />
+    <meta name="twitter:image" content="TODO" />
+
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+
+    <script id="env-vars"></script>
+    <script type="module">
+      import { Buffer } from 'buffer'
+      window.Buffer = Buffer
+    </script>
+    <script type="module" src="/index.tsx"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

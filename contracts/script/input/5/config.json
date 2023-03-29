@@ -1,0 +1,9 @@
+{
+  "name": "mainnet",
+  "whale": "0xB42d67899636F08A9019659DCBEaFaC33a27461c",
+  "keeperAddress": "0x02777053d6764996e594c3E88AF1D58D5363a2e6",
+  "registrarControllerAddress": "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5",
+  "baseRegistrarAddress": "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85",
+  "priceOracle": "0xe14174f6C7EB9bc03fbae5316d4FEa72392A2E06",
+  "protocolFee": 100000000000000000
+}

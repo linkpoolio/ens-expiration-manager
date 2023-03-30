@@ -31,7 +31,7 @@ export const getAllSubscriptions = async (): Promise<
     return transformSubscriptions(data)
   } catch (error: any) {
     throw new Error(
-      `Error fetching raffles list from contract: ${error.message}`
+      `Error fetching subscriptions list from contract: ${error.message}`
     )
   }
 }
@@ -49,7 +49,7 @@ export const getSubscription = async (
     return transformSubscription(data)
   } catch (error: any) {
     throw new Error(
-      `Error fetching raffles list from contract: ${error.message}`
+      `Error fetching subscriptions list from contract: ${error.message}`
     )
   }
 }
@@ -67,7 +67,7 @@ export const getTotalFee = async (
     return Number(data)
   } catch (error: any) {
     throw new Error(
-      `Error fetching raffles list from contract: ${error.message}`
+      `Error fetching subscriptions list from contract: ${error.message}`
     )
   }
 }
@@ -85,7 +85,7 @@ export const getExpirationDate = async (
     return Number(data)
   } catch (error: any) {
     throw new Error(
-      `Error fetching raffles list from contract: ${error.message}`
+      `Error fetching subscriptions list from contract: ${error.message}`
     )
   }
 }

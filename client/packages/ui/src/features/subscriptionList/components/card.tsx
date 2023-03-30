@@ -6,7 +6,6 @@ import { ArrowIcon } from '@ui/components'
 import { Routes, createRoute } from '@ui/Routes'
 // import { formatUnixTs, formatFinishDate } from '@ui/utils'
 import { SubscriptionInstance } from '@ui/models'
-import { BigNumber } from 'ethers'
 import { convertUnixTimeToDuration } from '@ui/utils'
 
 export const Card = (subscription: SubscriptionInstance) => {

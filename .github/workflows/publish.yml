@@ -1,0 +1,29 @@
+name: Publish Docker Image
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  ens-expiration-manager-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Login to ECR
+        id: ecr
+        uses: elgohr/ecr-login-action@master
+        with:
+          access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ secrets.AWS_REGION }}
+      - name: Publish to Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        env:
+          DOCKER_BUILDKIT: 1
+        with:
+          name: ens-expiration-manager
+          username: ${{ steps.ecr.outputs.username }}
+          password: ${{ steps.ecr.outputs.password }}
+          registry: ${{ steps.ecr.outputs.registry }}
+          dockerfile: ui.dockerfile
+          tag_names: true

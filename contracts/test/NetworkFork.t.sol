@@ -82,9 +82,6 @@ contract ENSExpirationManagerNetworkForkTest is Test {
             renewalCount,
             gracePeriod
         );
-        uint256 protocolFeePool = ensExpirationManager
-            .getProtocolFeePoolBalance();
-        assertEq(protocolFeePool, renewalCount * 100000000000000000);
     }
 
     function testFork_AddSubscription() public {

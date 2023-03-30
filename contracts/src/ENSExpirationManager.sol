@@ -5,6 +5,8 @@ import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/autom
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IENSExpirationManager} from "./interfaces/IENSExpirationManager.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {SafeMath} from "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
+import {Address} from "../lib/openzeppelin-contracts/contracts/utils/Address.sol";
 import {ETHRegistrarController} from "@ens-contracts/contracts/ethregistrar/ETHRegistrarController.sol";
 import {BaseRegistrarImplementation} from "@ens-contracts/contracts/ethregistrar/BaseRegistrarImplementation.sol";
 import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
@@ -15,6 +17,8 @@ contract ENSExpirationManager is
     Pausable,
     ReentrancyGuard
 {
+    using SafeMath for uint256;
+    using Address for address;
     /// @dev The BaseRegistrarImplementation contract
     BaseRegistrarImplementation baseRegistrar;
     /// @dev The ETHRegistrarController contract
@@ -23,7 +27,6 @@ contract ENSExpirationManager is
     address public owner;
     address public keeperRegistryAddress;
     uint256 public protocolFee;
-    uint256 public protocolFeePool;
     uint256 public withdrawableProtocolFeePool;
     uint256[] private subscriptionIds;
     /// @dev Mapping of tokenIds to the subscription
@@ -253,20 +256,6 @@ contract ENSExpirationManager is
     }
 
     /**
-     * @notice This method is called to get the protocol fee
-     */
-    function getProtocolFee() external view returns (uint256) {
-        return protocolFee;
-    }
-
-    /**
-     * @notice This method is called to get the balance of the protocol fee pool
-     */
-    function getProtocolFeePoolBalance() external view returns (uint256) {
-        return protocolFeePool;
-    }
-
-    /**
      * @notice This method is called to get the balance of the withdrawable protocol fee pool
      */
     function getWithdrawableProtocolFeePoolBalance()
@@ -319,6 +308,7 @@ contract ENSExpirationManager is
             _currentExpiration,
             _renewalDuration
         );
+        uint256 _totalFee = (_price + protocolFee) * _renewalCount;
         if (_getTokenOwner(_tokenId) != msg.sender) {
             revert InvalidOwner();
         }
@@ -334,7 +324,7 @@ contract ENSExpirationManager is
         if (_renewalCount < 1) {
             revert InvalidRenewalCount();
         }
-        if (msg.value < (protocolFee + _price) * _renewalCount) {
+        if (msg.value < _totalFee) {
             revert InsufficientFunds();
         }
         Subscription memory newSubscription = Subscription(
@@ -347,8 +337,7 @@ contract ENSExpirationManager is
         );
         subscriptions[_tokenId] = newSubscription;
         subscriptionIds.push(_tokenId);
-        deposits[msg.sender] += msg.value * _renewalCount;
-        protocolFeePool += protocolFee * _renewalCount;
+        deposits[msg.sender] += _totalFee;
         emit DomainSubscriptionAdded(
             msg.sender,
             _domainName,
@@ -373,12 +362,11 @@ contract ENSExpirationManager is
         // calculate number of refundable renewals
         uint256 refundableRenewals = subscriptions[_tokenId].renewalCount -
             subscriptions[_tokenId].renewedCount;
-
-        deposits[msg.sender] -= _price * refundableRenewals;
-        protocolFeePool -= protocolFee * refundableRenewals;
-        pendingWithdrawals[msg.sender] +=
-            (_price + protocolFee) *
+        uint256 totalRefundableFee = (_price + protocolFee) *
             refundableRenewals;
+
+        deposits[msg.sender] -= totalRefundableFee;
+        pendingWithdrawals[msg.sender] += totalRefundableFee;
         _deleteSubscription(_tokenId);
     }
 
@@ -389,7 +377,7 @@ contract ENSExpirationManager is
         uint256 amount = pendingWithdrawals[msg.sender];
         require(amount > 0, "No pending withdrawals");
         pendingWithdrawals[msg.sender] = 0;
-        payable(msg.sender).transfer(amount);
+        Address.sendValue(payable(msg.sender), amount);
         emit PendingWithdrawalsWithdrawn(msg.sender, amount);
     }
 
@@ -414,43 +402,72 @@ contract ENSExpirationManager is
     function checkUpkeep(
         bytes calldata /* checkData */
     ) external override returns (bool upkeepNeeded, bytes memory performData) {
-        uint256[] memory expiredDomainSubscriptionIds = new uint256[](0);
+        uint256[] memory expiredDomainSubscriptionIds = new uint256[](
+            subscriptionIds.length
+        );
         uint256 expiredDomainSubscriptionIdsCount = 0;
-        uint256[] memory invalidSubscriptionsIds = new uint256[](0);
+        uint256[] memory invalidSubscriptionsIds = new uint256[](
+            subscriptionIds.length
+        );
         uint256 invalidSubscriptionsIdsCount = 0;
-
         for (uint256 i = 0; i < subscriptionIds.length; i++) {
             uint256 tokenId = subscriptionIds[i];
-            // If the owner of the subscription is not the owner of the ENS Domain, delete the subscription
+            // If the owner of the subscription is not the owner of the ENS Domain, mark the subscription as invalid
             if (subscriptions[tokenId].owner != _getTokenOwner(tokenId)) {
-                invalidSubscriptionsIds[invalidSubscriptionsIdsCount] = tokenId;
-                invalidSubscriptionsIdsCount++;
-                emit DomainSubscriptionRemoved(tokenId);
+                invalidSubscriptionsIds[
+                    invalidSubscriptionsIdsCount++
+                ] = tokenId;
                 continue;
             }
+            uint256 currentExpiration = baseRegistrar.nameExpires(tokenId);
+            uint256 price = priceOracle.price(
+                subscriptions[tokenId].domainName,
+                currentExpiration,
+                subscriptions[tokenId].renewalDuration
+            );
+            uint256 rentPrice = registrarController
+                .rentPrice(
+                    subscriptions[tokenId].domainName,
+                    subscriptions[tokenId].renewalDuration
+                )
+                .base;
+            uint256 requiredDeposit = price.add(protocolFee).add(rentPrice);
             if (
                 _isExpiring(tokenId) &&
-                deposits[subscriptions[tokenId].owner] <
-                protocolFee +
-                    registrarController
-                        .rentPrice(
-                            subscriptions[tokenId].domainName,
-                            subscriptions[tokenId].renewalDuration
-                        )
-                        .base
+                deposits[subscriptions[tokenId].owner] >= requiredDeposit
             ) {
                 expiredDomainSubscriptionIds[
-                    expiredDomainSubscriptionIdsCount
+                    expiredDomainSubscriptionIdsCount++
                 ] = tokenId;
-                expiredDomainSubscriptionIdsCount++;
-                emit DomainSubscriptionExpired(tokenId);
             }
         }
-        if (expiredDomainSubscriptionIds.length > 0) {
+        // Adjust array sizes to match the actual number of elements
+        uint256[] memory adjustedExpiredDomainSubscriptionIds = new uint256[](
+            expiredDomainSubscriptionIdsCount
+        );
+        for (uint256 i = 0; i < expiredDomainSubscriptionIdsCount; i++) {
+            adjustedExpiredDomainSubscriptionIds[
+                i
+            ] = expiredDomainSubscriptionIds[i];
+        }
+        uint256[] memory adjustedInvalidSubscriptionsIds = new uint256[](
+            invalidSubscriptionsIdsCount
+        );
+        for (uint256 i = 0; i < invalidSubscriptionsIdsCount; i++) {
+            adjustedInvalidSubscriptionsIds[i] = invalidSubscriptionsIds[i];
+        }
+        if (
+            expiredDomainSubscriptionIdsCount > 0 ||
+            invalidSubscriptionsIdsCount > 0
+        ) {
             upkeepNeeded = true;
             performData = abi.encode(
-                expiredDomainSubscriptionIds,
-                invalidSubscriptionsIds
+                adjustedExpiredDomainSubscriptionIds,
+                adjustedInvalidSubscriptionsIds
+            );
+            emit DomainSubscriptionsCheckCompleted(
+                adjustedExpiredDomainSubscriptionIds,
+                adjustedInvalidSubscriptionsIds
             );
         }
         return (upkeepNeeded, performData);
@@ -462,57 +479,68 @@ contract ENSExpirationManager is
      */
     function performUpkeep(
         bytes calldata performData
-    ) external override onlyKeeperRegistry whenNotPaused {
-        uint256[] memory expiredDomainSubscriptionIds;
-        uint256[] memory invalidSubscriptionsIds;
-        (expiredDomainSubscriptionIds, invalidSubscriptionsIds) = abi.decode(
-            performData,
-            (uint256[], uint256[])
-        );
-        if (invalidSubscriptionsIds.length > 0) {
-            for (uint256 i = 0; i < invalidSubscriptionsIds.length; i++) {
-                // Refund the deposit without the protocol fee as a penalty
-                uint256 _tokenId = invalidSubscriptionsIds[i];
-                uint256 _price = priceOracle.price(
-                    subscriptions[_tokenId].domainName,
-                    baseRegistrar.nameExpires(_tokenId),
-                    subscriptions[_tokenId].renewalDuration
-                );
+    ) external override onlyKeeperRegistry whenNotPaused nonReentrant {
+        (
+            uint256[] memory expiredDomainSubscriptionIds,
+            uint256[] memory invalidSubscriptionsIds
+        ) = abi.decode(performData, (uint256[], uint256[]));
+        // Process refunds for invalid subscriptions
+        for (uint256 i = 0; i < invalidSubscriptionsIds.length; i++) {
+            uint256 tokenId = invalidSubscriptionsIds[i];
+            Subscription storage subscription = subscriptions[tokenId];
+            uint256 price = priceOracle.price(
+                subscription.domainName,
+                baseRegistrar.nameExpires(tokenId),
+                subscription.renewalDuration
+            );
+            require(
+                deposits[subscription.owner] >= price,
+                "Insufficient deposit"
+            );
+            uint256 refundableRenewals = subscription.renewalCount -
+                subscription.renewedCount;
+            uint256 totalRefundableFee = price * refundableRenewals;
 
-                require(
-                    deposits[subscriptions[_tokenId].owner] >= _price,
-                    "Insufficient deposit"
-                );
-
-                deposits[subscriptions[_tokenId].owner] -= _price;
-                pendingWithdrawals[subscriptions[_tokenId].owner] += _price;
-                protocolFeePool -= protocolFee;
-                withdrawableProtocolFeePool += protocolFee;
-                _deleteSubscription(_tokenId);
-            }
+            deposits[subscription.owner] = deposits[subscription.owner].sub(
+                totalRefundableFee
+            );
+            pendingWithdrawals[subscription.owner] = pendingWithdrawals[
+                subscription.owner
+            ].add(totalRefundableFee);
+            withdrawableProtocolFeePool = withdrawableProtocolFeePool.add(
+                protocolFee.mul(refundableRenewals)
+            );
+            emit DepositRefunded(
+                subscription.owner,
+                tokenId,
+                totalRefundableFee
+            );
+            _deleteSubscription(tokenId);
         }
+        // Process renewals for expired domain subscriptions
         for (uint256 i = 0; i < expiredDomainSubscriptionIds.length; i++) {
             uint256 tokenId = expiredDomainSubscriptionIds[i];
-            address owner = subscriptions[tokenId].owner;
+            Subscription storage subscription = subscriptions[tokenId];
             uint256 currentExpiration = baseRegistrar.nameExpires(tokenId);
             uint256 renewalPrice = priceOracle.price(
-                subscriptions[tokenId].domainName,
+                subscription.domainName,
                 currentExpiration,
-                subscriptions[tokenId].renewalDuration
+                subscription.renewalDuration
             );
+            // Perform the renewal
             registrarController.renew{value: renewalPrice}(
-                subscriptions[tokenId].domainName,
-                subscriptions[tokenId].renewalDuration
+                subscription.domainName,
+                subscription.renewalDuration
             );
-            deposits[owner] -= renewalPrice;
-            protocolFeePool -= protocolFee;
-            withdrawableProtocolFeePool += protocolFee;
-            subscriptions[tokenId].renewedCount++;
+            deposits[subscription.owner] = deposits[subscription.owner].sub(
+                renewalPrice.add(protocolFee)
+            );
+            withdrawableProtocolFeePool = withdrawableProtocolFeePool.add(
+                protocolFee
+            );
+            subscription.renewedCount = subscription.renewedCount.add(1);
             emit DomainSubscriptionRenewed(tokenId);
-            if (
-                subscriptions[tokenId].renewedCount ==
-                subscriptions[tokenId].renewalCount
-            ) {
+            if (subscription.renewedCount == subscription.renewalCount) {
                 _deleteSubscription(tokenId);
             }
         }

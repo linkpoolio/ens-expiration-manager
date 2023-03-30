@@ -1,0 +1,44 @@
+name: Build and Test
+on: [push]
+
+jobs:
+  ui:
+    name: Lint, Build, Install, Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+
+      - name: Use Node.js '14'
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14.17.0"
+
+      - uses: actions/cache@v2
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install Yarn dependencies
+        working-directory: client
+        run: yarn install --immutable
+
+      - name: Run lint
+        working-directory: client/packages/ui
+        run: yarn lint
+
+      - name: Run prettier
+        working-directory: client/packages/ui
+        run: yarn prettier
+
+      - name: Run typescript check
+        working-directory: client/packages/ui
+        run: yarn tsc
+
+      - name: Build
+        working-directory: client/packages/ui
+        run: yarn build
+
+      - name: Test
+        working-directory: client/packages/ui
+        run: yarn test

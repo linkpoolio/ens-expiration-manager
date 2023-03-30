@@ -19,7 +19,7 @@ const spy = (value) => {
   spy.mockReturnValue(value)
 }
 
-const text = 'Create Raffle'
+const text = 'Add Subscription'
 
 describe('NavigationBar', () => {
   it('does not render create button on not connected', () => {

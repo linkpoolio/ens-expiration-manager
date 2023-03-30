@@ -1,8 +1,8 @@
 {
-  "name": "raffle-chainlink-automation",
+  "name": "ens-expiration-manager",
   "version": "1.0.0",
   "author": "LinkPool",
-  "description": "Raffle SDK and UI",
+  "description": "ENS Expiration Manager Contracts and UI",
   "license": "ISC",
   "engines": {
     "node": ">=14.0.0"

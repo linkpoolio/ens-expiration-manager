@@ -14,7 +14,16 @@ interface IENSExpirationManager {
 
     event DomainSubscriptionRemoved(uint256 _tokenId);
 
-    event DomainSubscriptionExpired(uint256 _tokenId);
+    event DepositRefunded(
+        address indexed _owner,
+        uint256 _tokenId,
+        uint256 _amount
+    );
+
+    event DomainSubscriptionsCheckCompleted(
+        uint256[] expiredDomainSubscriptionIds,
+        uint256[] invalidSubscriptionsIds
+    );
 
     event DepositToppedUp(address indexed _owner, uint256 _amount);
     event DepositWithdrawn(address indexed _owner, uint256 _amount);
@@ -34,6 +43,7 @@ interface IENSExpirationManager {
     error InvalidSubscriptionId();
     error InsufficientFunds();
     error InvalidRenewalCount();
+    error NoPendingWithdrawals();
 
     function setKeeperRegistryAddress(address _keeperAddress) external;
 

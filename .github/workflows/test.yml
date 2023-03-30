@@ -42,4 +42,4 @@ jobs:
         working-directory: contracts
         env:
           GOERLI_RPC_URL: "https://ethereum-goerli-rpc.allthatnode.com"
-          MAINNET_RPC_URL: 
+          MAINNET_RPC_URL: "https://eth.llamarpc.com"

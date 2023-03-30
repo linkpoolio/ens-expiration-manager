@@ -24,6 +24,9 @@ $ git clone git@github.com:linkpoolio/ens-expiration-manager.git
 # Network RPCs
 export RPC_URL=
 
+# Mainnet RPC
+export MAINNET_RPC_URL=
+
 # Private key for contract deployment
 export PRIVATE_KEY=
 

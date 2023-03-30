@@ -113,9 +113,14 @@ contract ENSExpirationManager is
      * @notice This method is called to withdraw the protocol fees
      */
     function withdrawProtocolFees() external onlyOwner {
+        require(
+            withdrawableProtocolFeePool > 0,
+            "No fees available for withdrawal"
+        );
         uint256 amount = withdrawableProtocolFeePool;
         withdrawableProtocolFeePool = 0;
-        payable(msg.sender).transfer(amount);
+        Address.sendValue(payable(msg.sender), amount);
+        emit ProtocolFeesWithdrawn(msg.sender, amount);
     }
 
     /**
@@ -208,7 +213,7 @@ contract ENSExpirationManager is
         for (uint256 i = 0; i < subscriptionIds.length; i++) {
             if (subscriptionIds[i] == _tokenId) {
                 subscriptionIds[i] = subscriptionIds[
-                    subscriptionIds.length - 1
+                    subscriptionIds.length.sub(1)
                 ];
                 subscriptionIds.pop();
                 delete subscriptions[_tokenId];
@@ -229,9 +234,9 @@ contract ENSExpirationManager is
      */
     function _isExpiring(uint256 _tokenId) internal view returns (bool) {
         return
-            baseRegistrar.nameExpires(_tokenId) -
-                subscriptions[_tokenId].gracePeriod <=
-            block.timestamp;
+            baseRegistrar.nameExpires(_tokenId).sub(
+                subscriptions[_tokenId].gracePeriod
+            ) <= block.timestamp;
     }
 
     /**
@@ -289,11 +294,16 @@ contract ENSExpirationManager is
             _currentExpiration,
             _renewalDuration
         );
-        return _price + protocolFee;
+        return _price.add(protocolFee);
     }
 
     /**
-     * @notice This method is called to add subscriptions
+     * @notice Add a subscription for a domain
+     * @param _domainName The domain name to be subscribed
+     * @param _renewalDuration The duration for each renewal in seconds
+     * @param _renewalCount The number of renewals to be paid for in advance
+     * @param _gracePeriod The grace period in seconds before the domain expires for when the subscription will be renewed
+     * @dev This function is non-reentrant to prevent potential reentrancy attacks
      */
     function addSubscription(
         string memory _domainName,
@@ -308,25 +318,19 @@ contract ENSExpirationManager is
             _currentExpiration,
             _renewalDuration
         );
-        uint256 _totalFee = (_price + protocolFee) * _renewalCount;
-        if (_getTokenOwner(_tokenId) != msg.sender) {
-            revert InvalidOwner();
-        }
-        if (
-            _currentExpiration - _gracePeriod <= block.timestamp ||
-            _gracePeriod == 0
-        ) {
-            revert InvalidGracePeriod();
-        }
-        if (_renewalDuration < 28 * 24 * 60 * 60) {
-            revert InvalidRenewalDuration();
-        }
-        if (_renewalCount < 1) {
-            revert InvalidRenewalCount();
-        }
-        if (msg.value < _totalFee) {
-            revert InsufficientFunds();
-        }
+        uint256 _totalFee = (_price.add(protocolFee)).mul(_renewalCount);
+        require(_getTokenOwner(_tokenId) == msg.sender, "InvalidOwner");
+        require(
+            _currentExpiration.sub(_gracePeriod) > block.timestamp ||
+                _gracePeriod != 0,
+            "InvalidGracePeriod"
+        );
+        require(
+            _renewalDuration >= 28 * 24 * 60 * 60,
+            "InvalidRenewalDuration"
+        );
+        require(_renewalCount >= 1, "InvalidRenewalCount");
+        require(msg.value >= _totalFee, "InsufficientFunds");
         Subscription memory newSubscription = Subscription(
             msg.sender,
             _domainName,
@@ -337,7 +341,7 @@ contract ENSExpirationManager is
         );
         subscriptions[_tokenId] = newSubscription;
         subscriptionIds.push(_tokenId);
-        deposits[msg.sender] += _totalFee;
+        deposits[msg.sender] = deposits[msg.sender].add(_totalFee);
         emit DomainSubscriptionAdded(
             msg.sender,
             _domainName,
@@ -348,30 +352,37 @@ contract ENSExpirationManager is
     }
 
     /**
-     * @notice This method is called to cancel and refund the subscription
+     * @notice Cancel an existing domain subscription
+     * @param _tokenId The token ID representing the domain subscription to be canceled
+     * @dev This function is non-reentrant to prevent potential reentrancy attacks
+     * @dev The refundable fee is calculated for the remaining unprocessed renewals and added to the pendingWithdrawals mapping
      */
     function cancelSubscription(uint256 _tokenId) external nonReentrant {
-        if (subscriptions[_tokenId].owner != msg.sender) {
-            revert InvalidOwner();
-        }
+        require(subscriptions[_tokenId].owner == msg.sender, "InvalidOwner");
         uint256 _price = priceOracle.price(
             subscriptions[_tokenId].domainName,
             baseRegistrar.nameExpires(_tokenId),
             subscriptions[_tokenId].renewalDuration
         );
         // calculate number of refundable renewals
-        uint256 refundableRenewals = subscriptions[_tokenId].renewalCount -
-            subscriptions[_tokenId].renewedCount;
-        uint256 totalRefundableFee = (_price + protocolFee) *
-            refundableRenewals;
-
-        deposits[msg.sender] -= totalRefundableFee;
-        pendingWithdrawals[msg.sender] += totalRefundableFee;
+        uint256 refundableRenewals = subscriptions[_tokenId].renewalCount.sub(
+            subscriptions[_tokenId].renewedCount
+        );
+        uint256 totalRefundableFee = (_price.add(protocolFee)).mul(
+            refundableRenewals
+        );
+        deposits[msg.sender] = deposits[msg.sender].sub(totalRefundableFee);
+        pendingWithdrawals[msg.sender] = pendingWithdrawals[msg.sender].add(
+            totalRefundableFee
+        );
         _deleteSubscription(_tokenId);
     }
 
     /**
      * @notice This method is called to withdraw the pending withdrawals
+     * @dev This function is non-reentrant to prevent potential reentrancy attacks
+     * @dev The pendingWithdrawals mapping is reset to 0 after the withdrawal
+     * @dev The withdrawn amount is sent to the msg.sender
      */
     function withdrawPendingWithdrawals() external nonReentrant {
         uint256 amount = pendingWithdrawals[msg.sender];
@@ -476,6 +487,10 @@ contract ENSExpirationManager is
     /**
      * @notice Perform the upkeep. This method is called by the Keeper.
      * @param performData ABI-encoded data to pass to the performUpkeep
+     * @dev This function is non-reentrant to prevent potential reentrancy attacks
+     * @dev The performData is decoded to get the expiredDomainSubscriptionIds and invalidSubscriptionsIds
+     * @dev The expiredDomainSubscriptionIds are processed to renew the domains
+     * @dev The invalidSubscriptionsIds are processed to refund the deposits
      */
     function performUpkeep(
         bytes calldata performData

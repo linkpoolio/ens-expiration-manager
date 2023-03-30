@@ -25,25 +25,12 @@ interface IENSExpirationManager {
         uint256[] invalidSubscriptionsIds
     );
 
-    event DepositToppedUp(address indexed _owner, uint256 _amount);
-    event DepositWithdrawn(address indexed _owner, uint256 _amount);
     event PendingWithdrawalsWithdrawn(address indexed _owner, uint256 _amount);
+    event ProtocolFeesWithdrawn(address indexed _owner, uint256 _amount);
 
     error ZeroAddress();
-    error InvalidWithdrawAmount();
-    error InvalidTopUpAmount();
     error InvalidOwner();
-    error DomainAlreadyExpired();
-    error InvalidGracePeriod();
-    error InvalidRenewalDuration();
-    error InvalidSubscriptionsLength();
-    error NotOwnerOfSubscription();
-    error InsufficientDeposit();
     error OnlyKeeperRegistry();
-    error InvalidSubscriptionId();
-    error InsufficientFunds();
-    error InvalidRenewalCount();
-    error NoPendingWithdrawals();
 
     function setKeeperRegistryAddress(address _keeperAddress) external;
 

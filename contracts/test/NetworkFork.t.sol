@@ -95,15 +95,6 @@ contract ENSExpirationManagerNetworkForkTest is Test {
         ensExpirationManager.cancelSubscription(tokenId1);
     }
 
-    function testFork_WithdrawProtocolFees() public {
-        forkSubscriptionFixture();
-        vm.prank(admin);
-        ensExpirationManager.withdrawProtocolFees();
-        uint256 withdrawableProtocolFeePool = ensExpirationManager
-            .getWithdrawableProtocolFeePoolBalance();
-        assertEq(withdrawableProtocolFeePool, 0);
-    }
-
     function testFork_PerformUpkeepRenewSingleDomain() public {
         forkSubscriptionFixture();
         keeperAddress = address(config.keeperAddress);
@@ -117,5 +108,14 @@ contract ENSExpirationManagerNetworkForkTest is Test {
             invalidSubscriptionsIds
         );
         ensExpirationManager.performUpkeep(performData);
+    }
+
+    function testFork_WithdrawProtocolFees() public {
+        testFork_PerformUpkeepRenewSingleDomain();
+        vm.prank(admin);
+        ensExpirationManager.withdrawProtocolFees();
+        uint256 withdrawableProtocolFeePool = ensExpirationManager
+            .getWithdrawableProtocolFeePoolBalance();
+        assertEq(withdrawableProtocolFeePool, 0);
     }
 }

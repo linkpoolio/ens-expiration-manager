@@ -1,6 +1,6 @@
 export const Routes = {
   SubscriptionList: '/',
-  SubscriptionDetail: '/raffle/:id',
+  SubscriptionDetail: '/subscription/:id',
   SubscriptionCreate: '/create'
 }
 

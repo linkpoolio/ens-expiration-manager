@@ -16,6 +16,8 @@ interface IENSExpirationManager {
 
     event DomainSubscriptionCancelled(uint256 _subscriptionId);
 
+    event DomainSubscriptionTopUp(uint256 _subscriptionId, uint256 _value);
+
     event DepositRefunded(
         address indexed _owner,
         uint256 _subscriptionId,

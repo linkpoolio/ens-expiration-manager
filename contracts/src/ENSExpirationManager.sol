@@ -295,6 +295,25 @@ contract ENSExpirationManager is
     }
 
     /**
+     * @notice Top up an existing domain subscription
+     * @param _subscriptionId The subscription ID representing the domain subscription to be topped up
+     * @dev This function is non-reentrant to prevent potential reentrancy attacks
+     */
+    function topUpSubscription(
+        uint256 _subscriptionId
+    ) external payable nonReentrant {
+        Subscription storage subscription = subscriptions[_subscriptionId];
+        if (subscription.owner != msg.sender) {
+            revert("InvalidOwner");
+        }
+        if (subscription.state == SubscriptionState.CANCELLED) {
+            revert("SubscriptionCancelled");
+        }
+        subscription.deposit = subscription.deposit.add(msg.value);
+        emit DomainSubscriptionTopUp(_subscriptionId, msg.value);
+    }
+
+    /**
      * @notice Cancel an existing domain subscription
      * @param _subscriptionId The subscription ID representing the domain subscription to be cancelled
      * @dev This function is non-reentrant to prevent potential reentrancy attacks

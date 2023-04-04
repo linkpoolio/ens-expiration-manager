@@ -6,23 +6,24 @@ interface IENSExpirationManager {
         address owner,
         string domainName,
         uint256 renewalDuration,
-        uint256 renewalCount,
-        uint256 gracePeriod
+        uint256 gracePeriod,
+        uint256 value
     );
 
-    event DomainSubscriptionRenewed(uint256 _tokenId);
+    event DomainSubscriptionRenewed(uint256 _subscriptionId);
 
-    event DomainSubscriptionRemoved(uint256 _tokenId);
+    event DomainSubscriptionRemoved(uint256 _subscriptionId);
+
+    event DomainSubscriptionCancelled(uint256 _subscriptionId);
 
     event DepositRefunded(
         address indexed _owner,
-        uint256 _tokenId,
+        uint256 _subscriptionId,
         uint256 _amount
     );
 
     event DomainSubscriptionsCheckCompleted(
-        uint256[] expiredDomainSubscriptionIds,
-        uint256[] invalidSubscriptionsIds
+        uint256[] expiredDomainSubscriptionIds
     );
 
     event PendingWithdrawalsWithdrawn(address indexed _owner, uint256 _amount);
@@ -43,9 +44,8 @@ interface IENSExpirationManager {
     function addSubscription(
         string memory _domainName,
         uint256 _renewalDuration,
-        uint256 _renewalCount,
         uint256 _gracePeriod
     ) external payable;
 
-    function cancelSubscription(uint256 _tokenId) external;
+    function cancelSubscription(uint256 _subscriptionId) external;
 }

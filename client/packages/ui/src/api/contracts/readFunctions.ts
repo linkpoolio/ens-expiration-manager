@@ -13,7 +13,7 @@ import { BigNumber } from 'ethers'
 // TODO: REMOVE THIS
 const ensExpirationManagerContractAddress =
   env.ensExpirationManagerContractAddress() ||
-  '0xd5Fbe74B04881eFD23aB2A281491CF3be4165a2E'
+  '0x0956550D0041eBD3fFe4fa939Fce0d6e3dE3fB9d'
 
 const ensENSBaseRegistrarContractAddress =
   env.ensENSBaseRegistrarContractAddress() ||

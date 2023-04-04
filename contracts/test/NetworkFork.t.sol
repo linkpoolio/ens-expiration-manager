@@ -69,17 +69,14 @@ contract ENSExpirationManagerNetworkForkTest is Test {
         vm.prank(whale);
         uint256 duration;
         uint256 gracePeriod;
-        uint256 renewalCount;
         domainName1 = "vitalik";
         domainName2 = "lnbox";
         duration = 4838400;
         gracePeriod = 241920;
-        renewalCount = 3;
 
         ensExpirationManager.addSubscription{value: 2 ether}(
             domainName1,
             duration,
-            renewalCount,
             gracePeriod
         );
     }
@@ -91,31 +88,38 @@ contract ENSExpirationManagerNetworkForkTest is Test {
     function testFork_CancelSubscriptions() public {
         forkSubscriptionFixture();
         vm.prank(whale);
-        uint256 tokenId1 = uint256(keccak256(bytes(domainName1)));
-        ensExpirationManager.cancelSubscription(tokenId1);
+        uint256 tokenId = uint256(keccak256(bytes(domainName1)));
+        uint256 subscriptionId = uint256(
+            keccak256(abi.encodePacked(tokenId, whale))
+        );
+        ensExpirationManager.cancelSubscription(subscriptionId);
     }
 
     function testFork_PerformUpkeepRenewSingleDomain() public {
         forkSubscriptionFixture();
         keeperAddress = address(config.keeperAddress);
         vm.prank(keeperAddress);
-        uint256 tokenId1 = uint256(keccak256(bytes(domainName1)));
-        uint256[] memory expiredToBeRenewedIds = new uint256[](1);
-        expiredToBeRenewedIds[0] = tokenId1;
-        uint256[] memory invalidSubscriptionsIds = new uint256[](0);
-        performData = abi.encode(
-            expiredToBeRenewedIds,
-            invalidSubscriptionsIds
+        uint256 tokenId = uint256(keccak256(bytes(domainName1)));
+        uint256 subscriptionId = uint256(
+            keccak256(abi.encodePacked(tokenId, whale))
         );
+        uint256[] memory expiredToBeRenewedIds = new uint256[](1);
+        expiredToBeRenewedIds[0] = subscriptionId;
+        performData = abi.encode(expiredToBeRenewedIds);
         ensExpirationManager.performUpkeep(performData);
     }
 
     function testFork_WithdrawProtocolFees() public {
         testFork_PerformUpkeepRenewSingleDomain();
+        assertEq(
+            ensExpirationManager.getWithdrawableProtocolFeePoolBalance(),
+            100000000000000000
+        );
         vm.prank(admin);
         ensExpirationManager.withdrawProtocolFees();
-        uint256 withdrawableProtocolFeePool = ensExpirationManager
-            .getWithdrawableProtocolFeePoolBalance();
-        assertEq(withdrawableProtocolFeePool, 0);
+        assertEq(
+            ensExpirationManager.getWithdrawableProtocolFeePoolBalance(),
+            0
+        );
     }
 }

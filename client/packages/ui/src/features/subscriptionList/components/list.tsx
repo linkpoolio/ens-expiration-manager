@@ -9,7 +9,6 @@ import { useAsyncManager, useStore } from '@ui/hooks'
 import {
   getSubscriptionList,
   Card,
-  Filters,
   filterList,
   initialFilterState
 } from '../index'

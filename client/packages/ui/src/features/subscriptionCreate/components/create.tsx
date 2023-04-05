@@ -18,9 +18,8 @@ import { addSubscription } from '../methods'
 
 export const baseInitialState = {
   domain: '',
-  renewalDuration: 2419200,
-  renewalCount: 1,
-  gracePeriod: 604800
+  renewalDuration: 28,
+  deposit: 0
 }
 
 export const SubscriptionCreate = () => {
@@ -109,7 +108,7 @@ export const SubscriptionCreate = () => {
         <GridItem>
           <Control
             label="Renewal Duration"
-            helper="In seconds (default: 2419200)"
+            helper="In days (default: 28)"
             isInvalid={!!validation['renewalDuration']}
             errorMessage={validation['renewalDuration']}>
             <Input
@@ -121,35 +120,18 @@ export const SubscriptionCreate = () => {
             />
           </Control>
         </GridItem>
-
         <GridItem>
           <Control
-            label="Renewal Count"
-            helper="Number of renewals (default: 1)"
-            isInvalid={!!validation['renewalCount']}
-            errorMessage={validation['renewalCount']}>
+            label="Deposit"
+            helper="In ETH (default: 0)"
+            isInvalid={!!validation['deposit']}
+            errorMessage={validation['deposit']}>
             <Input
-              isInvalid={!!validation['renewalCount']}
-              type="text"
-              placeholder="Number"
-              value={state.renewalCount}
-              onChange={onTextChange('renewalCount')}
-            />
-          </Control>
-        </GridItem>
-
-        <GridItem>
-          <Control
-            label="Grace Period"
-            helper="In seconds (default: 604800)"
-            isInvalid={!!validation['gracePeriod']}
-            errorMessage={validation['gracePeriod']}>
-            <Input
-              isInvalid={!!validation['gracePeriod']}
+              isInvalid={!!validation['deposit']}
               type="text"
               placeholder="Number"
               value={state.gracePeriod}
-              onChange={onTextChange('gracePeriod')}
+              onChange={onTextChange('deposit')}
             />
           </Control>
         </GridItem>

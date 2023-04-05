@@ -3,9 +3,13 @@ import { BigNumber } from 'ethers'
 export interface SubscriptionInstance {
   owner: string
   domain: string
-  tokenId: string
+  subscriptionId: BigNumber
   renewalDuration: BigNumber
-  renewalCount: number
-  renewedCount: number
   gracePeriod: BigNumber
+  deposit: string
+  state: SubscriptionState
+}
+export enum SubscriptionState {
+  CANCELLED,
+  ACTIVE
 }

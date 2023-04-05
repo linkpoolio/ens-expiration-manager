@@ -1,13 +1,12 @@
 export interface AddSubscriptionParams {
   domain: string
   renewalDuration: number
-  renewalCount: number
   gracePeriod: number
-  fee: number
+  deposit: number
 }
 
 export interface CancelSubscriptionParams {
-  tokenId: string
+  subscriptionId: string
 }
 
 export interface GetRenewalPriceParams {
@@ -16,7 +15,7 @@ export interface GetRenewalPriceParams {
 }
 
 export interface GetSubscriptionParams {
-  tokenId: string
+  subscriptionId: string
 }
 
 export interface GetExpirationDateParams {

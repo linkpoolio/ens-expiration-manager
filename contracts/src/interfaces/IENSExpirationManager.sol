@@ -2,13 +2,7 @@
 pragma solidity ^0.8.17;
 
 interface IENSExpirationManager {
-    event DomainSubscriptionAdded(
-        address owner,
-        string domainName,
-        uint256 renewalDuration,
-        uint256 gracePeriod,
-        uint256 value
-    );
+    event DomainSubscriptionAdded(uint256 subscriptionId);
 
     event DomainSubscriptionRenewed(uint256 _subscriptionId);
 
@@ -28,12 +22,15 @@ interface IENSExpirationManager {
         uint256[] expiredDomainSubscriptionIds
     );
 
+    event DomainSubscriptionUpdated(uint256 _subscriptionId);
+
     event PendingWithdrawalsWithdrawn(address indexed _owner, uint256 _amount);
     event ProtocolFeesWithdrawn(address indexed _owner, uint256 _amount);
 
     error ZeroAddress();
     error InvalidOwner();
     error OnlyKeeperRegistry();
+    error SubscriptionExists();
 
     function setKeeperRegistryAddress(address _keeperAddress) external;
 

@@ -1,12 +1,16 @@
 import { contracts } from '@ui/api'
+import { Routes } from '@ui/Routes'
 
-export const getSubscription = async ({ tokenId, asyncManager, update }) => {
+export const getSubscription = async ({
+  subscriptionId,
+  asyncManager,
+  update
+}) => {
   try {
     asyncManager.start()
-    const expirationDate = await contracts.getExpirationDate({ tokenId })
-    const subscription = await contracts.getSubscription({ tokenId })
+    const subscription = await contracts.getSubscription({ subscriptionId })
     asyncManager.success()
-    update({ subscription: { ...subscription, expirationDate } })
+    update({ subscription: { ...subscription } })
   } catch (error) {
     asyncManager.fail(
       `Could not get the subscription, please check your're connected to the correct network.`
@@ -14,28 +18,26 @@ export const getSubscription = async ({ tokenId, asyncManager, update }) => {
   }
 }
 
-export const cancelSubscription = async ({ domain, asyncManager, success }) => {
+export const cancelSubscription = async ({
+  subscriptionId,
+  asyncManager,
+  history
+}) => {
   try {
     asyncManager.start()
-    const { wait: cancelWait } = await contracts.cancelSubscription({
-      tokenId: domain
+    const { wait } = await contracts.cancelSubscription({
+      subscriptionId: subscriptionId
     })
     asyncManager.waiting()
-    const cancelIsSuccess = await cancelWait().then(
-      (receipt) => receipt.status === 1
-    )
-    if (cancelIsSuccess) {
-      const { wait: withdrawWait } =
-        await contracts.withdrawPendingWithdrawals()
-      asyncManager.waiting()
-      const withdrawIsSuccess = await withdrawWait().then(
-        (receipt) => receipt.status === 1
-      )
-      if (!withdrawIsSuccess)
-        throw new Error('Request to cancel the subscription was not successful')
-      asyncManager.success()
-      success(true)
-    }
+    const isSuccess = await wait().then((receipt) => receipt.status === 1)
+    if (!isSuccess)
+      throw new Error('Request to add subscription was not successful')
+
+    asyncManager.success()
+    history.push({
+      pathname: Routes.SubscriptionList,
+      search: '?cancel-success'
+    })
   } catch (error) {
     asyncManager.fail(`Could not cancel subscription.`)
   }

@@ -29,12 +29,14 @@ contract ENSExpirationManager is
     uint256 public protocolFee;
     uint256 public withdrawableProtocolFeePool;
     uint256[] private subscriptionIds;
-    /// @dev Mapping of tokenIds to the subscription
+    /// @dev Mapping of subscriptionIds to the subscription
     mapping(uint256 => Subscription) public subscriptions;
+    /// @dev Mapping of subscriptionIds to the bool value
+    mapping(uint256 => bool) public subscriptionIdExists;
 
     enum SubscriptionState {
-        ACTIVE,
-        CANCELLED
+        CANCELLED,
+        ACTIVE
     }
 
     struct Subscription {
@@ -262,6 +264,14 @@ contract ENSExpirationManager is
     ) external payable nonReentrant {
         uint256 _tokenId = uint256(keccak256(bytes(_domainName)));
         uint256 _currentExpiration = baseRegistrar.nameExpires(_tokenId);
+        uint256 subscriptionId = uint256(
+            keccak256(abi.encodePacked(_tokenId, msg.sender))
+        );
+        // Check if the subscription exists and is cancelled before adding a new one
+        require(
+            subscriptions[subscriptionId].state == SubscriptionState.CANCELLED,
+            "SubscriptionExists"
+        );
         require(_getTokenOwner(_tokenId) == msg.sender, "InvalidOwner");
         require(
             _currentExpiration.sub(_gracePeriod) > block.timestamp ||
@@ -272,9 +282,6 @@ contract ENSExpirationManager is
             _renewalDuration >= 28 * 24 * 60 * 60,
             "InvalidRenewalDuration"
         );
-        uint256 subscriptionId = uint256(
-            keccak256(abi.encodePacked(_tokenId, msg.sender))
-        );
         Subscription memory newSubscription = Subscription(
             msg.sender,
             _domainName,
@@ -283,15 +290,16 @@ contract ENSExpirationManager is
             msg.value,
             SubscriptionState.ACTIVE
         );
-        subscriptions[subscriptionId] = newSubscription;
-        subscriptionIds.push(subscriptionId);
-        emit DomainSubscriptionAdded(
-            msg.sender,
-            _domainName,
-            _renewalDuration,
-            _gracePeriod,
-            msg.value
-        );
+        if (subscriptionIdExists[subscriptionId] == false) {
+            subscriptionIdExists[subscriptionId] = true;
+            subscriptionIds.push(subscriptionId);
+            subscriptions[subscriptionId] = newSubscription;
+            emit DomainSubscriptionAdded(subscriptionId);
+        } else {
+            // If the subscription exists, update the subscription
+            subscriptions[subscriptionId] = newSubscription;
+            emit DomainSubscriptionUpdated(subscriptionId);
+        }
     }
 
     /**

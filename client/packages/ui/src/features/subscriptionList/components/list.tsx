@@ -40,8 +40,12 @@ export const SubscriptionList = (props) => {
         show={props.location?.search?.includes('create-success')}
         onClose={() => history.push(Routes.SubscriptionList)}
       />
+      <Success
+        message={'Subscription successfully cancelled'}
+        show={props.location?.search?.includes('cancel-success')}
+        onClose={() => history.push(Routes.SubscriptionList)}
+      />
       <Error asyncManager={asyncManager} />
-      <Filters store={filterStore} />
       <Grid
         templateColumns={{
           base: 'repeat(, 1fr)',

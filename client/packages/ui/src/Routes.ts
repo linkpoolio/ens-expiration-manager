@@ -4,4 +4,5 @@ export const Routes = {
   SubscriptionCreate: '/create'
 }
 
-export const createRoute = ({ route, id }) => route.replace(':id', id)
+export const createRoute = ({ route, subscriptionId }) =>
+  route.replace(':id', subscriptionId)

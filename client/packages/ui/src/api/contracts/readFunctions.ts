@@ -13,7 +13,7 @@ import { BigNumber } from 'ethers'
 // TODO: REMOVE THIS
 const ensExpirationManagerContractAddress =
   env.ensExpirationManagerContractAddress() ||
-  '0x0956550D0041eBD3fFe4fa939Fce0d6e3dE3fB9d'
+  '0x09d00ea34c6650984c245b07c3ccd11dc98588bf'
 
 const ensENSBaseRegistrarContractAddress =
   env.ensENSBaseRegistrarContractAddress() ||
@@ -44,7 +44,7 @@ export const getSubscription = async (
       abi: ensExpirationManagerABI,
       address: ensExpirationManagerContractAddress,
       functionName: 'getSubscription',
-      args: [BigNumber.from(params.tokenId)]
+      args: [BigNumber.from(params.subscriptionId)]
     })
     return transformSubscription(data)
   } catch (error: any) {

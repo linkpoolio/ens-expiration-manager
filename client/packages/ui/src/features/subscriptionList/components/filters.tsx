@@ -1,16 +1,18 @@
 import React, { useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { Switch, FormLabel, HStack, Box, Flex } from '@chakra-ui/react'
+import { SubscriptionState } from '@ui/models'
 
 export const initialFilterState = {
-  ownedByMe: false,
+  ownedByMe: true,
   status: ''
 }
 
 export const filterList = (filters, address) => (Subscription) => {
   const ownedByMe = !filters.ownedByMe || Subscription.owner == address
+  const stateEqualsOne = Subscription.state === SubscriptionState.ACTIVE
 
-  return ownedByMe
+  return ownedByMe && stateEqualsOne
 }
 
 export const Filters = ({ store }) => {

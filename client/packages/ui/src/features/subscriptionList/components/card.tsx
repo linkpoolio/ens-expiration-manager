@@ -50,7 +50,7 @@ export const Card = (subscription: SubscriptionInstance) => {
       as={Link}
       to={createRoute({
         route: Routes.SubscriptionDetail,
-        id: subscription.tokenId
+        subscriptionId: subscription.subscriptionId
       })}>
       <VStack spacing="6" mb="6" alignItems="start">
         <Heading
@@ -62,21 +62,18 @@ export const Card = (subscription: SubscriptionInstance) => {
           {subscription.domain}
         </Heading>
         <Divider orientation="horizontal" />
-
         <Flex justify="space-between" w="100%">
           <Text fontSize={'sm'}>Renewal duration:</Text>
           <Text fontSize={'sm'}>
             {convertUnixTimeToDuration(subscription.renewalDuration.toString())}
           </Text>
         </Flex>
-
         <Flex justify="space-between" w="100%">
-          <Text fontSize={'sm'}>Available renewals:</Text>
-          <Text fontSize={'sm'}>
-            {subscription.renewalCount - subscription.renewedCount}
-          </Text>
+          <Text fontSize={'sm'}>Deposit:</Text>
+          <Text fontSize={'sm'}>{subscription.deposit} ETH</Text>
         </Flex>
       </VStack>
+
       <Box w="100%" mt="auto">
         <Divider orientation="horizontal" mb="6" />
         <Flex justify="end" w="100%">

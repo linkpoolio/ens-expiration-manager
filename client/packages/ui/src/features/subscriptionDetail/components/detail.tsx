@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { useAccount } from 'wagmi'
+import { useHistory } from 'react-router-dom'
 import {
   Container,
   Heading,
@@ -8,22 +9,20 @@ import {
   Box,
   Flex,
   useMediaQuery,
-  HStack
+  Button
 } from '@chakra-ui/react'
 
-import { Loading, Pending, Error } from '@ui/components'
+import { Error } from '@ui/components'
 import { useAsyncManager, useStore } from '@ui/hooks'
 import { shortenAddress } from '@ui/utils'
-import { getSubscription } from '@ui/features/subscriptionDetail'
-import { convertUnixTimeToDuration, formatUnixTs } from '@ui/utils'
 import {
-  StepManager,
-  CancelSubscriptionButton
+  getSubscription,
+  cancelSubscription
 } from '@ui/features/subscriptionDetail'
+import { convertUnixTimeToDuration } from '@ui/utils'
 
 export const initialState = {
   subscription: null,
-  step: null,
   identifier: null,
   participantStatus: null,
   isParticipant: null,
@@ -54,14 +53,27 @@ export const SubscriptionDetail = ({ id }) => {
     identifier: address ? address : initialState.identifier
   })
   const asyncManager = useAsyncManager()
-
+  const history = useHistory()
   const { subscription } = store.state
   const componentDidMount = () => {
-    if (id) getSubscription({ tokenId: id, update: store.update, asyncManager })
+    if (id)
+      getSubscription({
+        subscriptionId: id,
+        update: store.update,
+        asyncManager
+      })
   }
+  const onSubmit = () => {
+    cancelSubscription({
+      subscriptionId: id,
+      asyncManager,
+      history
+    })
+  }
+  console.log('subscription', subscription)
   useEffect(componentDidMount, [])
   return (
-    subscription?.tokenId && (
+    subscription?.subscriptionId && (
       <Container
         maxW="container.md"
         my="20"
@@ -70,8 +82,6 @@ export const SubscriptionDetail = ({ id }) => {
         bg="brand.white"
         boxShadow="brand.base"
         borderRadius="base">
-        <Loading asyncManager={asyncManager} />
-        <Pending asyncManager={asyncManager} />
         <Error asyncManager={asyncManager} />
         <Center flexDirection="column" mb="6">
           <Heading
@@ -87,21 +97,12 @@ export const SubscriptionDetail = ({ id }) => {
         <Box>
           <Row name="Name" value={subscription.domain} />
           <Row
-            name="Renewal Date"
-            value={formatUnixTs(
-              subscription.expirationDate - subscription.gracePeriod
-            )}
-          />
-          <Row
-            name="Available renewals"
-            value={subscription.renewalCount - subscription.renewedCount}
-          />
-          <Row
             name="Renewal duration"
             value={convertUnixTimeToDuration(
               subscription.renewalDuration.toString()
             )}
           />
+          <Row name="Deposit" value={`${subscription.deposit} ETH`} />
           <Row
             name="Owner"
             value={
@@ -112,17 +113,15 @@ export const SubscriptionDetail = ({ id }) => {
           />
           <Center h="60px"></Center>
           <Center>
-            <HStack spacing="6">
-              {address && address === subscription.owner && (
-                <CancelSubscriptionButton update={store.update} />
-              )}
-              <StepManager
-                id={id}
-                store={store}
-                address={address}
-                subscription={subscription}
-              />
-            </HStack>
+            <Button
+              variant="default"
+              onClick={onSubmit}
+              isLoading={asyncManager.loading || asyncManager.pending}
+              loadingText={
+                asyncManager.loading ? 'Submitting' : 'Pending Transaction'
+              }>
+              Cancel
+            </Button>
           </Center>
         </Box>
       </Container>

@@ -8,7 +8,7 @@ import { BigNumber } from 'ethers'
 // TODO: REMOVE THIS
 const ensExpirationManagerContractAddress =
   env.ensExpirationManagerContractAddress() ||
-  '0x0956550D0041eBD3fFe4fa939Fce0d6e3dE3fB9d'
+  '0x09d00ea34c6650984c245b07c3ccd11dc98588bf'
 
 export const addSubscription = async (
   params: contracts.AddSubscriptionParams
@@ -19,14 +19,9 @@ export const addSubscription = async (
       abi,
       functionName: 'addSubscription',
       overrides: {
-        value: BigNumber.from(params.fee.toString())
+        value: BigNumber.from(params.deposit)
       },
-      args: [
-        params.domain,
-        params.renewalDuration,
-        params.renewalCount,
-        params.gracePeriod
-      ]
+      args: [params.domain, params.renewalDuration, params.gracePeriod]
     })
     const data = await writeContract(config)
     return data
@@ -43,7 +38,7 @@ export const cancelSubscription = async (
       address: ensExpirationManagerContractAddress,
       abi,
       functionName: 'cancelSubscription',
-      args: [params.tokenId]
+      args: [params.subscriptionId]
     })
     const data = await writeContract(config)
     return data

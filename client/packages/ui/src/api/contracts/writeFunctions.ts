@@ -19,7 +19,9 @@ export const addSubscription = async (
       abi,
       functionName: 'addSubscription',
       overrides: {
-        value: BigNumber.from(ethers.utils.parseUnits(params.deposit, 'ether'))
+        value: BigNumber.from(
+          ethers.utils.parseUnits(params.deposit.toString(), 'ether')
+        )
       },
       args: [params.domain, params.renewalDuration, params.gracePeriod]
     })
@@ -70,7 +72,9 @@ export const topUpSubscription = async (
       abi,
       functionName: 'topUpSubscription',
       overrides: {
-        value: BigNumber.from(ethers.utils.parseUnits(params.amount, 'ether'))
+        value: BigNumber.from(
+          ethers.utils.parseUnits(params.amount.toString(), 'ether')
+        )
       },
       args: [params.subscriptionId]
     })

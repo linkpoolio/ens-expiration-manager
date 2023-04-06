@@ -2,14 +2,7 @@ import React from 'react'
 import { WagmiConfig, createClient, configureChains } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
-import {
-  mainnet,
-  localhost,
-  hardhat,
-  goerli,
-  sepolia,
-  polygonMumbai
-} from 'wagmi/chains'
+import { mainnet, localhost, hardhat, goerli, sepolia } from 'wagmi/chains'
 
 const DEFAULT_CHAIN_ID = goerli.id
 
@@ -44,17 +37,6 @@ export const CHAINS = [
       },
       default: {
         http: ['https://ethereum-sepolia-rpc.allthatnode.com']
-      }
-    }
-  },
-  {
-    ...polygonMumbai,
-    rpcUrls: {
-      public: {
-        http: ['https://endpoints.omniatech.io/v1/matic/mumbai/public']
-      },
-      default: {
-        http: ['https://endpoints.omniatech.io/v1/matic/mumbai/public	']
       }
     }
   },

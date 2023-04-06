@@ -42,3 +42,26 @@ export const cancelSubscription = async ({
     asyncManager.fail(`Could not cancel subscription.`)
   }
 }
+
+export const topUpSubscription = async ({
+  subscriptionId,
+  amount,
+  asyncManager,
+  update
+}) => {
+  try {
+    const { wait } = await contracts.topUpSubscription({
+      subscriptionId,
+      amount
+    })
+    asyncManager.waiting()
+    const isSuccess = await wait().then((receipt) => receipt.status === 1)
+    if (!isSuccess) {
+      throw new Error('Request to top up subscription was not successful')
+    }
+    await getSubscription({ subscriptionId, asyncManager, update })
+    asyncManager.success()
+  } catch (error) {
+    asyncManager.fail(`Failed to top up subscription.`)
+  }
+}

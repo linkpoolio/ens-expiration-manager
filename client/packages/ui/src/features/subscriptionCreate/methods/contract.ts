@@ -1,6 +1,5 @@
 import { contracts } from '@ui/api'
 import { Routes } from '@ui/Routes'
-import { ethers } from 'ethers'
 
 export const addSubscription = async ({ state, asyncManager, history }) => {
   try {
@@ -9,7 +8,7 @@ export const addSubscription = async ({ state, asyncManager, history }) => {
       ...state,
       domain: state.domain,
       renewalDuration: state.renewalDuration * 86400, // 1 day
-      deposit: ethers.utils.parseUnits(state.deposit, 'ether'),
+      deposit: state.deposit,
       gracePeriod: 86400 // 1 day
     })
     asyncManager.waiting()

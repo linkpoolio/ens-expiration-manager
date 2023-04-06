@@ -1,3 +1,3 @@
 export const steps = {
-  CANCEL: 'CANCEL'
+  TOPUP_SUBSCRIPTION: 'TOPUP_SUBSCRIPTION'
 }

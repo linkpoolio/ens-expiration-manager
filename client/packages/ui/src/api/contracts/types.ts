@@ -21,3 +21,8 @@ export interface GetSubscriptionParams {
 export interface GetExpirationDateParams {
   tokenId: string
 }
+
+export interface TopUpSubscriptionParams {
+  subscriptionId: string
+  amount: number
+}

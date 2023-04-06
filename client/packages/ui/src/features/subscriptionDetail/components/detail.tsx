@@ -9,7 +9,9 @@ import {
   Box,
   Flex,
   useMediaQuery,
-  Button
+  Button,
+  HStack,
+  Tooltip
 } from '@chakra-ui/react'
 
 import { Error } from '@ui/components'
@@ -17,7 +19,9 @@ import { useAsyncManager, useStore } from '@ui/hooks'
 import { shortenAddress } from '@ui/utils'
 import {
   getSubscription,
-  cancelSubscription
+  cancelSubscription,
+  TopUpSubscriptionButton,
+  StepManager
 } from '@ui/features/subscriptionDetail'
 import { convertUnixTimeToDuration } from '@ui/utils'
 
@@ -70,7 +74,6 @@ export const SubscriptionDetail = ({ id }) => {
       history
     })
   }
-  console.log('subscription', subscription)
   useEffect(componentDidMount, [])
   return (
     subscription?.subscriptionId && (
@@ -111,17 +114,35 @@ export const SubscriptionDetail = ({ id }) => {
                 : shortenAddress(subscription.owner)
             }
           />
-          <Center h="60px"></Center>
           <Center>
-            <Button
-              variant="default"
-              onClick={onSubmit}
-              isLoading={asyncManager.loading || asyncManager.pending}
-              loadingText={
-                asyncManager.loading ? 'Submitting' : 'Pending Transaction'
-              }>
-              Cancel
-            </Button>
+            <HStack spacing="6">
+              <TopUpSubscriptionButton
+                subscription={subscription}
+                update={store.update}
+                address={address}
+              />
+              <Tooltip
+                hasArrow
+                arrowSize={10}
+                placement="top"
+                label="Cancel your subscription and get your deposit back">
+                <Button
+                  variant="default"
+                  onClick={onSubmit}
+                  isLoading={asyncManager.loading || asyncManager.pending}
+                  loadingText={
+                    asyncManager.loading ? 'Submitting' : 'Pending Transaction'
+                  }>
+                  Cancel
+                </Button>
+              </Tooltip>
+              <StepManager
+                id={subscription.subscriptionId.toString()}
+                store={store}
+                address={address}
+                subscription={subscription}
+              />
+            </HStack>
           </Center>
         </Box>
       </Container>

@@ -3,7 +3,7 @@ import { prepareWriteContract, writeContract } from '@wagmi/core'
 import { env } from '@ui/config'
 import { contracts } from '@ui/api'
 import abi from './abi/ENSExpirationManager.json'
-import { BigNumber } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 
 // TODO: REMOVE THIS
 const ensExpirationManagerContractAddress =
@@ -19,7 +19,7 @@ export const addSubscription = async (
       abi,
       functionName: 'addSubscription',
       overrides: {
-        value: BigNumber.from(params.deposit)
+        value: BigNumber.from(ethers.utils.parseUnits(params.deposit, 'ether'))
       },
       args: [params.domain, params.renewalDuration, params.gracePeriod]
     })
@@ -58,5 +58,25 @@ export const withdrawPendingWithdrawals = async () => {
     return data
   } catch (error: any) {
     throw new Error(`Error withdrawing pending withdrawals: ${error.message}`)
+  }
+}
+
+export const topUpSubscription = async (
+  params: contracts.TopUpSubscriptionParams
+) => {
+  try {
+    const config = await prepareWriteContract({
+      address: ensExpirationManagerContractAddress,
+      abi,
+      functionName: 'topUpSubscription',
+      overrides: {
+        value: BigNumber.from(ethers.utils.parseUnits(params.amount, 'ether'))
+      },
+      args: [params.subscriptionId]
+    })
+    const data = await writeContract(config)
+    return data
+  } catch (error: any) {
+    throw new Error(`Error topping up subscription: ${error.message}`)
   }
 }

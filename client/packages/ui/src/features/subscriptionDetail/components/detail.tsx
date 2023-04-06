@@ -116,11 +116,7 @@ export const SubscriptionDetail = ({ id }) => {
           />
           <Center>
             <HStack spacing="6">
-              <TopUpSubscriptionButton
-                subscription={subscription}
-                update={store.update}
-                address={address}
-              />
+              <TopUpSubscriptionButton update={store.update} />
               <Tooltip
                 hasArrow
                 arrowSize={10}

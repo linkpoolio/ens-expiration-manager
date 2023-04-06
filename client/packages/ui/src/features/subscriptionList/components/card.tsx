@@ -37,7 +37,7 @@ export const Card = (subscription: SubscriptionInstance) => {
         }
       }}
       direction="column"
-      key={subscription.tokenId}
+      key={subscription.subscriptionId.toString()}
       border="1px"
       borderColor="brand.gray_10"
       _hover={{

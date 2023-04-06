@@ -1,4 +1,4 @@
 export * from './detail'
-export * from './topupSubscription'
-export * from './topupSubscriptionButton'
+export * from './topUpSubscription'
+export * from './topUpSubscriptionButton'
 export * from './stepManager'

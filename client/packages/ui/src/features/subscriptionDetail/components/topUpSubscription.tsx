@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Button, Flex, Heading, Grid, GridItem, Input } from '@chakra-ui/react'
-import { Error, Control } from '@ui/components'
+import { Control } from '@ui/components'
 
 import { useStore } from '@ui/hooks'
 import { topUpSubscription } from '@ui/features/subscriptionDetail'
@@ -9,7 +9,7 @@ export const baseInitialState = {
   amount: 0
 }
 
-export const TopUpSubscription = ({ id, reset, asyncManager, store }) => {
+export const TopUpSubscription = ({ id, asyncManager, store }) => {
   const _store = useStore({
     ...baseInitialState
   })
